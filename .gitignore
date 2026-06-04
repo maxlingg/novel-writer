@@ -1,0 +1,12 @@
+*.iml
+.dart_tool/
+.packages
+build/
+.idea/
+*.lock
+.pub-cache/
+.pub/
+.metadata
+**/doc/
+**/test/
+*.g.dart

@@ -1,0 +1,52 @@
+name: novel_writer
+description: 一款 AI 驱动的小说创作工具
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # 状态管理
+  provider: ^6.1.1
+
+  # 网络请求
+  http: ^1.2.0
+
+  # 文件路径
+  path_provider: ^2.1.2
+
+  # 本地存储
+  shared_preferences: ^2.2.2
+
+  # 文件选择
+  file_picker: ^6.1.1
+
+  # 国际化
+  intl: ^0.19.0
+
+  # 字体
+  google_fonts: ^6.1.0
+
+  # 唯一ID
+  uuid: ^4.3.3
+
+  # ZIP压缩
+  archive: ^3.4.10
+
+  # WebDAV
+  webdav_client: ^1.2.1
+
+  # DOCX处理
+  docx_template: ^0.4.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+
+flutter:
+  uses-material-design: true
