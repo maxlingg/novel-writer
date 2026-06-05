@@ -5,6 +5,8 @@ import '../services/project_service.dart';
 import '../services/chapter_service.dart';
 import '../services/memo_service.dart';
 import '../utils/constants.dart';
+import '../models/chapter.dart';
+import '../models/memo.dart';
 
 /// 搜索页面
 class SearchScreen extends StatefulWidget {

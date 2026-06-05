@@ -7,6 +7,11 @@ import '../models/ai_model_config.dart';
 import '../models/tool_call.dart';
 import 'ai_model_provider.dart';
 import 'tool_registry.dart';
+import 'providers/anthropic_provider.dart';
+import 'providers/openai_provider.dart';
+import 'providers/deepseek_provider.dart';
+import 'providers/glm_provider.dart';
+import 'providers/kimi_provider.dart';
 import '../utils/constants.dart';
 
 /// AI聊天引擎

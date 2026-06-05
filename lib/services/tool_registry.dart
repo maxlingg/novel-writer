@@ -30,7 +30,7 @@ class ToolDefinition {
         'description': description,
         'parameters': {
           'type': 'object',
-          'properties': parameters.map((key, param) => key, param.toJson()),
+          'properties': parameters.map((key, param) => MapEntry(key, param.toJson())),
           'required': parameters.entries
               .where((e) => e.value.isRequired)
               .map((e) => e.key)

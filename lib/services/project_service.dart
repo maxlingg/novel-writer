@@ -169,6 +169,26 @@ class ProjectService extends ChangeNotifier {
     }
   }
 
+  /// 创建章节
+  Future<Chapter> createChapter({
+    required String projectId,
+    required String title,
+    String volumeId = '',
+    int sortOrder = 0,
+  }) async {
+    final chapter = Chapter(
+      projectId: projectId,
+      volumeId: volumeId,
+      title: title,
+      sortOrder: sortOrder,
+    );
+
+    final filePath = await FileHelper.getChapterFilePath(projectId, chapter.id);
+    await FileHelper.writeJsonFile(filePath, chapter.toJson());
+
+    return chapter;
+  }
+
   /// 加载项目的章节列表
   Future<List<Chapter>> loadChapters(String projectId) async {
     final projectDir = await FileHelper.getProjectDirectory(projectId);

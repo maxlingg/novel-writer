@@ -12,6 +12,8 @@ import 'screens/webdav_screen.dart';
 import 'screens/skill_marketplace_screen.dart';
 import 'screens/memo_screen.dart';
 import 'screens/search_screen.dart';
+import 'screens/asset_library_screen.dart';
+import 'screens/distillation_screen.dart';
 
 class NovelWriterApp extends StatelessWidget {
   const NovelWriterApp({super.key});
@@ -136,6 +138,16 @@ class NovelWriterApp extends StatelessWidget {
         final projectId = settings.arguments as String?;
         return MaterialPageRoute(
           builder: (_) => SearchScreen(projectId: projectId),
+        );
+      case AppRoutes.assetLibrary:
+        final projectId = settings.arguments as String?;
+        return MaterialPageRoute(
+          builder: (_) => AssetLibraryScreen(projectId: projectId),
+        );
+      case AppRoutes.distillation:
+        final projectId = settings.arguments as String?;
+        return MaterialPageRoute(
+          builder: (_) => DistillationScreen(projectId: projectId),
         );
       default:
         return MaterialPageRoute(

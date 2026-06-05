@@ -41,6 +41,18 @@ class _HomeScreenState extends State<HomeScreen> {
         title: const Text(AppConstants.appName),
         actions: [
           IconButton(
+            icon: const Icon(Icons.inventory_2),
+            onPressed: () {
+              Navigator.pushNamed(context, AppRoutes.assetLibrary);
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.auto_awesome),
+            onPressed: () {
+              Navigator.pushNamed(context, AppRoutes.distillation);
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
               Navigator.pushNamed(context, AppRoutes.search);

@@ -39,7 +39,7 @@ class ChatMessage {
       isError: json['isError'] as bool? ?? false,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'] as String)
-          : null,
+          : DateTime.now(),
     );
   }
 

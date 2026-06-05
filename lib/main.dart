@@ -13,6 +13,8 @@ import 'services/webdav_service.dart';
 import 'services/search_service.dart';
 import 'services/docx_exporter.dart';
 import 'services/docx_importer.dart';
+import 'services/asset_service.dart';
+import 'services/distillation_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,13 +36,15 @@ void main() async {
   final aiEngine = AIEngine();
 
   // 初始化工具注册表
-  final toolRegistry = ToolRegistry();
+  final toolRegistry = ToolRegistry()..initBuiltInTools();
 
   // 初始化技能管理器
   final skillManager = SkillManager();
+  await skillManager.init();
 
   // 初始化WebDAV服务
   final webdavService = WebDAVService();
+  webdavService.init(settingsService.webdavConfig);
 
   // 初始化搜索服务
   final searchService = SearchService();
@@ -50,6 +54,14 @@ void main() async {
 
   // 初始化DOCX导入器
   final docxImporter = DocxImporter();
+
+  // 初始化素材库服务
+  final assetService = AssetService();
+  await assetService.loadAssets();
+
+  // 初始化蒸馏服务
+  final distillationService = DistillationService();
+  await distillationService.initialize();
 
   runApp(
     MultiProvider(
@@ -65,6 +77,8 @@ void main() async {
         ChangeNotifierProvider(create: (_) => searchService),
         Provider(create: (_) => docxExporter),
         Provider(create: (_) => docxImporter),
+        ChangeNotifierProvider(create: (_) => assetService),
+        ChangeNotifierProvider(create: (_) => distillationService),
       ],
       child: const NovelWriterApp(),
     ),

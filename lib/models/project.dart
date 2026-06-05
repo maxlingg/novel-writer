@@ -45,10 +45,10 @@ class Project {
       currentWordCount: json['currentWordCount'] as int? ?? 0,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'] as String)
-          : null,
+          : DateTime.now(),
       updatedAt: json['updatedAt'] != null
           ? DateTime.parse(json['updatedAt'] as String)
-          : null,
+          : DateTime.now(),
       lastSyncAt: json['lastSyncAt'] != null
           ? DateTime.parse(json['lastSyncAt'] as String)
           : null,

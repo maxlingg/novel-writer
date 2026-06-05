@@ -31,10 +31,10 @@ class Volume {
       sortOrder: json['sortOrder'] as int? ?? 0,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'] as String)
-          : null,
+          : DateTime.now(),
       updatedAt: json['updatedAt'] != null
           ? DateTime.parse(json['updatedAt'] as String)
-          : null,
+          : DateTime.now(),
     );
   }
 

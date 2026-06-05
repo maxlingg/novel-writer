@@ -48,7 +48,7 @@ class AIModelConfig {
       isEnabled: json['isEnabled'] as bool? ?? true,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'] as String)
-          : null,
+          : DateTime.now(),
     );
   }
 
@@ -128,7 +128,7 @@ class AIModelConfig {
       temperature: temperature ?? this.temperature,
       topP: topP ?? this.topP,
       extraParams: extraParams,
-      isEnabled: isEnabled ?? isEnabled,
+      isEnabled: isEnabled ?? this.isEnabled,
       createdAt: createdAt,
     );
   }

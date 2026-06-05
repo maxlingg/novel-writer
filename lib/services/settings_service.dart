@@ -142,6 +142,11 @@ class SettingsService extends ChangeNotifier {
     await _saveSettings();
   }
 
+  Future<void> setShowWordCount(bool enabled) async {
+    _settings = _settings.copyWith(showWordCount: enabled);
+    await _saveSettings();
+  }
+
   // ==================== AI模型配置 ====================
 
   /// 添加AI模型配置

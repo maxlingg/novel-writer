@@ -51,6 +51,8 @@ class AppRoutes {
   static const String skillMarketplace = '/skill-marketplace';
   static const String memo = '/memo';
   static const String search = '/search';
+  static const String assetLibrary = '/asset-library';
+  static const String distillation = '/distillation';
 }
 
 /// AI提供商类型

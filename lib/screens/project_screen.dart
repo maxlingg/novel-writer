@@ -122,11 +122,27 @@ class _ProjectScreenState extends State<ProjectScreen> {
                     arguments: widget.projectId,
                   );
                   break;
+                case 'assets':
+                  Navigator.pushNamed(
+                    context,
+                    AppRoutes.assetLibrary,
+                    arguments: widget.projectId,
+                  );
+                  break;
+                case 'distillation':
+                  Navigator.pushNamed(
+                    context,
+                    AppRoutes.distillation,
+                    arguments: widget.projectId,
+                  );
+                  break;
               }
             },
             itemBuilder: (context) => [
               const PopupMenuItem(value: 'memo', child: Text('备忘录')),
               const PopupMenuItem(value: 'search', child: Text('搜索')),
+              const PopupMenuItem(value: 'assets', child: Text('素材库')),
+              const PopupMenuItem(value: 'distillation', child: Text('内容蒸馏')),
             ],
           ),
         ],

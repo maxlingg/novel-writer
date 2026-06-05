@@ -33,7 +33,7 @@ class ToolCall {
       error: json['error'] as String?,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'] as String)
-          : null,
+          : DateTime.now(),
       completedAt: json['completedAt'] != null
           ? DateTime.parse(json['completedAt'] as String)
           : null,

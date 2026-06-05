@@ -85,9 +85,7 @@ class SettingsScreen extends StatelessWidget {
                 secondary: const Icon(Icons.show_chart),
                 title: const Text('显示字数统计'),
                 value: settings.showWordCount,
-                onChanged: (value) {
-                  // TODO: 更新设置
-                },
+                onChanged: (value) => settings.setShowWordCount(value),
               ),
 
               const Divider(),
