@@ -41,6 +41,13 @@ jobs:
           ls -la $ANDROID_HOME/platforms/ 2>/dev/null || echo "No platforms"
           ls -la $ANDROID_HOME/build-tools/ 2>/dev/null || echo "No build-tools"
           flutter config --list
+          # Create local.properties if not exists
+          if [ ! -f android/local.properties ]; then
+            echo "Creating local.properties..."
+            echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
+            echo "sdk.dir=$ANDROID_HOME" >> android/local.properties
+          fi
+          cat android/local.properties 2>/dev/null || echo "No local.properties"
 
       - name: Clean previous builds
         run: flutter clean
