@@ -3,7 +3,6 @@
 .packages
 build/
 .idea/
-*.lock
 .pub-cache/
 .pub/
 .metadata

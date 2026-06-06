@@ -46,12 +46,16 @@ jobs:
 
       - name: Build APK
         run: |
-          set -o pipefail
-          flutter build apk --release --verbose 2>&1 | tee build.log
+          flutter build apk --release 2>&1 | tee build.log
+        continue-on-error: true
 
-      - name: Show build log tail
+      - name: Upload build log
         if: always()
-        run: tail -100 build.log || echo "No build log"
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
+          retention-days: 7
 
       - name: Check APK file
         run: |
