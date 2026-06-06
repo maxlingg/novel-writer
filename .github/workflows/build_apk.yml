@@ -51,8 +51,14 @@ jobs:
       - name: Build APK (release)
         id: build
         run: |
-          flutter build apk --release
-          echo "BUILD_EXIT_CODE=$?" >> $GITHUB_OUTPUT
+          set -o pipefail
+          flutter build apk --release 2>&1 | tee build.log
+          EXIT_CODE=${PIPESTATUS[0]}
+          echo "BUILD_EXIT_CODE=$EXIT_CODE" >> $GITHUB_OUTPUT
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "Flutter build failed with exit code $EXIT_CODE"
+            exit $EXIT_CODE
+          fi
 
       - name: Build with Gradle directly
         if: always()
