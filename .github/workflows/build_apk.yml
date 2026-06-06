@@ -27,110 +27,36 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.19.6'
+          flutter-version: '3.22.3'
           channel: 'stable'
           cache: true
-
-      - name: Test with all lib files
-        run: |
-          set -o pipefail
-          cd /tmp
-          flutter create --org com.novelwriter test_full
-          cd test_full
-          rm -rf lib
-          cp -r $GITHUB_WORKSPACE/lib .
-          cp $GITHUB_WORKSPACE/pubspec.yaml .
-          flutter pub get 2>&1
-          echo "=== dart analyze ==="
-          flutter analyze 2>&1 | tail -20
-          echo "=== Building ==="
-          flutter build apk --release 2>&1 | tee /tmp/full.log
-          EXIT_CODE=${PIPESTATUS[0]}
-          if [ $EXIT_CODE -ne 0 ]; then
-            echo "=== FULL BUILD FAILED ==="
-            tail -100 /tmp/full.log
-          else
-            echo "=== FULL BUILD PASSED ==="
-          fi
-          echo "FULL_EXIT=$EXIT_CODE" >> $GITHUB_OUTPUT
-        continue-on-error: true
-
-      - name: Test with models only
-        run: |
-          set -o pipefail
-          cd /tmp
-          flutter create --org com.novelwriter test_models
-          cd test_models
-          rm -rf lib
-          mkdir -p lib/models
-          cp $GITHUB_WORKSPACE/lib/models/*.dart lib/models/
-          cp $GITHUB_WORKSPACE/pubspec.yaml .
-          cat > lib/main.dart << 'DARTEOF'
-          import 'package:flutter/material.dart';
-          void main() => runApp(const MaterialApp(home: Scaffold(body: Center(child: Text('test')))));
-          DARTEOF
-          flutter pub get 2>&1
-          flutter build apk --release 2>&1 | tee /tmp/models.log
-          EXIT_CODE=${PIPESTATUS[0]}
-          if [ $EXIT_CODE -ne 0 ]; then
-            echo "=== MODELS BUILD FAILED ==="
-            tail -100 /tmp/models.log
-          else
-            echo "=== MODELS BUILD PASSED ==="
-          fi
-          echo "MODELS_EXIT=$EXIT_CODE" >> $GITHUB_OUTPUT
-        continue-on-error: true
-
-      - name: Test with services only
-        run: |
-          set -o pipefail
-          cd /tmp
-          flutter create --org com.novelwriter test_services
-          cd test_services
-          rm -rf lib
-          mkdir -p lib/models lib/services lib/utils lib/services/providers lib/services/tools
-          # Copy models (needed by services)
-          cp $GITHUB_WORKSPACE/lib/models/*.dart lib/models/
-          cp $GITHUB_WORKSPACE/lib/services/*.dart lib/services/
-          cp $GITHUB_WORKSPACE/lib/services/providers/*.dart lib/services/providers/ 2>/dev/null || true
-          cp $GITHUB_WORKSPACE/lib/services/tools/*.dart lib/services/tools/ 2>/dev/null || true
-          cp $GITHUB_WORKSPACE/lib/utils/*.dart lib/utils/
-          cp $GITHUB_WORKSPACE/pubspec.yaml .
-          cat > lib/main.dart << 'DARTEOF'
-          import 'package:flutter/material.dart';
-          void main() => runApp(const MaterialApp(home: Scaffold(body: Center(child: Text('test')))));
-          DARTEOF
-          flutter pub get 2>&1
-          flutter build apk --release 2>&1 | tee /tmp/services.log
-          EXIT_CODE=${PIPESTATUS[0]}
-          if [ $EXIT_CODE -ne 0 ]; then
-            echo "=== SERVICES BUILD FAILED ==="
-            tail -100 /tmp/services.log
-          else
-            echo "=== SERVICES BUILD PASSED ==="
-          fi
-          echo "SERVICES_EXIT=$EXIT_CODE" >> $GITHUB_OUTPUT
-        continue-on-error: true
 
       - name: Build APK
         run: |
           set -o pipefail
+          
           cd /tmp
           flutter create --org com.novelwriter --project-name novel_writer fresh_app
           cd fresh_app
+          
           rm -rf lib
           cp -r $GITHUB_WORKSPACE/lib .
           cp $GITHUB_WORKSPACE/pubspec.yaml .
+          
           flutter pub get 2>&1
+          
           flutter build apk --release 2>&1 | tee build.log
           EXIT_CODE=${PIPESTATUS[0]}
+          
           if [ $EXIT_CODE -ne 0 ]; then
             echo "=== BUILD FAILED - tail of log ==="
             tail -200 build.log
             exit $EXIT_CODE
           fi
+          
           echo "=== BUILD SUCCEEDED ==="
           find . -name "*.apk" 2>/dev/null
+          
           APK=$(find . -name "*.apk" 2>/dev/null | head -1)
           if [ -n "$APK" ]; then
             mkdir -p $GITHUB_WORKSPACE/build/app/outputs/flutter-apk/
