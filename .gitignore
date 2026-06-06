@@ -10,3 +10,11 @@ build/
 **/doc/
 **/test/
 *.g.dart
+
+# Android build artifacts
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+*.jks
+*.keystore
