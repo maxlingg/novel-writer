@@ -41,30 +41,54 @@ jobs:
         run: flutter pub get
 
       - name: Build APK (release)
-        run: flutter build apk --release
-
-      - name: Check APK
+        id: build
         run: |
-          echo "=== Searching for APK ==="
-          APK=$(find . -name "app-release.apk" -o -name "*.apk" 2>/dev/null | head -5)
-          if [ -z "$APK" ]; then
-            echo "No APK found!"
-            echo "=== Listing build directory ==="
-            find build/ -type f 2>/dev/null | head -30
-            echo "=== Listing android directory ==="
-            find android/ -name "*.apk" 2>/dev/null
+          flutter build apk --release 2>&1 | tee build.log
+          echo "BUILD_EXIT_CODE=$?" >> $GITHUB_OUTPUT
+
+      - name: Find and Upload APK
+        if: always()
+        run: |
+          echo "## APK Build Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Search for APK in all possible locations
+          echo "Searching for APK files..."
+          ALL_APKS=$(find . -name "*.apk" 2>/dev/null)
+          
+          if [ -z "$ALL_APKS" ]; then
+            echo "❌ No APK files found anywhere!" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Build directory contents:" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            find build/ -type f 2>/dev/null | head -30 >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Android build directory:" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            find android/ -name "*.apk" -o -name "*.aab" 2>/dev/null >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Build log tail:" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            tail -30 build.log 2>/dev/null >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
-          echo "Found APK(s):"
-          echo "$APK"
+          
+          echo "✅ Found APK files:" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "$ALL_APKS" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          
           # Copy to standard location
           mkdir -p build/app/outputs/flutter-apk/
-          FIRST=$(echo "$APK" | head -1)
+          FIRST=$(echo "$ALL_APKS" | head -1)
           cp "$FIRST" build/app/outputs/flutter-apk/app-release.apk
-          echo "Copied to standard location"
-          ls -la build/app/outputs/flutter-apk/app-release.apk
+          echo "Copied to standard location: $(ls -la build/app/outputs/flutter-apk/app-release.apk)" >> $GITHUB_STEP_SUMMARY
 
       - name: Upload APK artifact
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: release-apk
@@ -72,6 +96,7 @@ jobs:
           retention-days: 30
 
       - name: Create Release
+        if: success()
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.0.${{ github.run_number }}
