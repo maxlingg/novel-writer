@@ -45,7 +45,15 @@ jobs:
         continue-on-error: true
 
       - name: Build APK
-        run: flutter build apk --release
+        run: |
+          flutter build apk --release --verbose 2>&1 | tee build.log
+        continue-on-error: true
+
+      - name: Show build log (last 100 lines)
+        if: always()
+        run: |
+          echo "=== Build log (last 100 lines) ==="
+          tail -100 build.log || echo "No build log found"
 
       - name: Check APK file
         run: |
