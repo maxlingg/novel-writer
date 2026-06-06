@@ -271,9 +271,9 @@ class _EditorScreenState extends State<EditorScreen> {
           children: [
             _buildHeader(theme),
             _buildToolbar(theme),
-            Divider(height: 1, color: theme.dividerColor.withAlpha(80)),
+            Divider(height: 1, color: theme.colorScheme.outlineVariant),
             Expanded(child: _buildEditor(theme, settings)),
-            Divider(height: 1, color: theme.dividerColor.withAlpha(80)),
+            Divider(height: 1, color: theme.colorScheme.outlineVariant),
             _buildStatusBar(theme, settings),
           ],
         ),
@@ -520,7 +520,7 @@ class _EditorScreenState extends State<EditorScreen> {
             Text(
               '|',
               style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.dividerColor,
+                color: theme.colorScheme.outlineVariant,
               ),
             ),
             SizedBox(width: AppSpacing.small),
