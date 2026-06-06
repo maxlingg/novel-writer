@@ -1,6 +1,7 @@
 plugins {
     id "com.android.application"
-    id "org.jetbrains.kotlin.android"
+    id "kotlin-android"
+    id "dev.flutter.flutter-gradle-plugin"
 }
 
 def localProperties = new Properties()
@@ -36,8 +37,8 @@ android {
 
     defaultConfig {
         applicationId "com.novelwriter.app"
-        minSdkVersion 21
-        targetSdk 34
+        minSdkVersion flutter.minSdkVersion
+        targetSdkVersion flutter.targetSdkVersion
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
     }
@@ -47,6 +48,10 @@ android {
             signingConfig signingConfigs.debug
         }
     }
+}
+
+flutter {
+    source '../..'
 }
 
 dependencies {}

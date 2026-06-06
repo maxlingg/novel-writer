@@ -55,26 +55,35 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
+      - name: Build APK (debug) - test JIT
+        id: build_debug
+        run: |
+          set -o pipefail
+          flutter build apk --debug 2>&1 | tee build_debug.log
+          EXIT_CODE=${PIPESTATUS[0]}
+          echo "DEBUG_EXIT_CODE=$EXIT_CODE" >> $GITHUB_OUTPUT
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "Flutter debug build failed with exit code $EXIT_CODE"
+            echo "=== tail of debug build log ==="
+            tail -100 build_debug.log
+          else
+            echo "Debug build succeeded!"
+            find . -name "*.apk" 2>/dev/null
+          fi
+
       - name: Build APK (release)
         id: build
         run: |
           set -o pipefail
-          flutter build apk --release 2>&1 | tee build.log
+          flutter build apk --release --verbose 2>&1 | tee build_release.log
           EXIT_CODE=${PIPESTATUS[0]}
           echo "BUILD_EXIT_CODE=$EXIT_CODE" >> $GITHUB_OUTPUT
           if [ $EXIT_CODE -ne 0 ]; then
-            echo "Flutter build failed with exit code $EXIT_CODE"
+            echo "Flutter release build failed with exit code $EXIT_CODE"
+            echo "=== tail of release build log ==="
+            tail -200 build_release.log
             exit $EXIT_CODE
           fi
-
-      - name: Build with Gradle directly
-        if: always()
-        run: |
-          cd android
-          echo "Running Gradle assembleRelease..."
-          ./gradlew assembleRelease --stacktrace --info 2>&1 | tee ../gradle_build.log
-          cd ..
-          echo "Gradle build done"
 
       - name: Find and Upload APK
         if: always()
@@ -87,8 +96,10 @@ jobs:
           find android/app/build/ -name "*.apk" 2>/dev/null || echo "No APK in android/app/build"
           echo "=== android/build/ ==="
           find android/build/ -name "*.apk" 2>/dev/null || echo "No APK in android/build"
-          echo "=== gradle_build.log tail ==="
-          tail -50 gradle_build.log 2>/dev/null || echo "No gradle_build.log"
+          echo "=== build_release.log tail ==="
+          tail -50 build_release.log 2>/dev/null || echo "No build_release.log"
+          echo "=== build_debug.log tail ==="
+          tail -50 build_debug.log 2>/dev/null || echo "No build_debug.log"
           
           APK=$(find . -name "*.apk" 2>/dev/null | head -1)
           if [ -z "$APK" ]; then
