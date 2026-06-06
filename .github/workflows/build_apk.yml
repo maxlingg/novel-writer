@@ -26,15 +26,37 @@ jobs:
         with:
           flutter-version: '3.22.3'
           channel: 'stable'
+          cache: true
+
+      - name: Flutter Doctor
+        run: flutter doctor -v
+
+      - name: Clean previous builds
+        run: flutter clean
 
       - name: Get dependencies
         run: flutter pub get
 
+      - name: Analyze code
+        run: flutter analyze
+
       - name: Build APK
-        run: flutter build apk --release
+        run: flutter build apk --release --verbose
+
+      - name: Check APK file
+        run: |
+          ls -la build/app/outputs/flutter-apk/
+          if [ -f "build/app/outputs/flutter-apk/app-release.apk" ]; then
+            echo "APK found successfully!"
+            echo "Size: $(du -h build/app/outputs/flutter-apk/app-release.apk)"
+          else
+            echo "APK not found!"
+            exit 1
+          fi
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 30
