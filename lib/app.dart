@@ -70,7 +70,7 @@ class NovelWriterApp extends StatelessWidget {
       // Card
       cardTheme: CardThemeData(
         elevation: 1,
-        shadowColor: Colors.black.withAlpha(20),
+        shadowColor: Colors.black.withOpacity(0.08),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.large),
         ),
@@ -124,7 +124,7 @@ class NovelWriterApp extends StatelessWidget {
       // Input
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: colorScheme.surfaceContainerHighest.withAlpha(80),
+        fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.3),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.medium),
           borderSide: BorderSide.none,
@@ -160,7 +160,7 @@ class NovelWriterApp extends StatelessWidget {
 
       // Divider
       dividerTheme: DividerThemeData(
-        color: colorScheme.outlineVariant.withAlpha(80),
+        color: colorScheme.outlineVariant.withOpacity(0.3),
         thickness: 0.5,
         space: 0,
       ),
@@ -215,7 +215,7 @@ class NovelWriterApp extends StatelessWidget {
       // Card
       cardTheme: CardThemeData(
         elevation: 1,
-        shadowColor: Colors.black.withAlpha(40),
+        shadowColor: Colors.black.withOpacity(0.16),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.large),
         ),
@@ -269,7 +269,7 @@ class NovelWriterApp extends StatelessWidget {
       // Input
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: colorScheme.surfaceContainerHighest.withAlpha(60),
+        fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.24),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.medium),
           borderSide: BorderSide.none,
@@ -305,7 +305,7 @@ class NovelWriterApp extends StatelessWidget {
 
       // Divider
       dividerTheme: DividerThemeData(
-        color: colorScheme.outlineVariant.withAlpha(60),
+        color: colorScheme.outlineVariant.withOpacity(0.24),
         thickness: 0.5,
         space: 0,
       ),
