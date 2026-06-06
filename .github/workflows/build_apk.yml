@@ -55,6 +55,34 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
+      - name: Test Flutter environment with new project
+        run: |
+          cd /tmp
+          echo "=== Creating test Flutter project ==="
+          flutter create --org com.test test_app
+          cd test_app
+          echo "=== Test project Android config ==="
+          cat android/settings.gradle
+          cat android/app/build.gradle
+          cat android/build.gradle
+          cat android/gradle.properties
+          echo "=== Building test project ==="
+          set -o pipefail
+          flutter build apk --debug -v 2>&1 | tee /tmp/test_build.log
+          EXIT_CODE=${PIPESTATUS[0]}
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "=== Test project FAILED ==="
+            echo "=== tail of test build log ==="
+            tail -100 /tmp/test_build.log
+            echo "=== PROBLEM: Flutter environment is broken ==="
+          else
+            echo "=== Test project SUCCEEDED ==="
+            echo "=== PROBLEM: Issue is specific to novel-writer project ==="
+            find . -name "*.apk" 2>/dev/null
+          fi
+          cd $GITHUB_WORKSPACE
+        continue-on-error: true
+
       - name: Gradle info
         run: |
           cd android
