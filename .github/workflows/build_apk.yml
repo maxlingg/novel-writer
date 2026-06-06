@@ -55,17 +55,30 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
+      - name: Gradle info
+        run: |
+          cd android
+          echo "=== Gradle version ==="
+          ./gradlew --version 2>&1
+          echo "=== Available tasks ==="
+          ./gradlew tasks --all 2>&1 | head -100
+          echo "=== Dependencies ==="
+          ./gradlew dependencies --configuration releaseRuntimeClasspath 2>&1 | head -100
+          cd ..
+
       - name: Build APK (debug) - test JIT
         id: build_debug
         run: |
           set -o pipefail
-          flutter build apk --debug 2>&1 | tee build_debug.log
+          flutter build apk --debug -v 2>&1 | tee build_debug.log
           EXIT_CODE=${PIPESTATUS[0]}
           echo "DEBUG_EXIT_CODE=$EXIT_CODE" >> $GITHUB_OUTPUT
           if [ $EXIT_CODE -ne 0 ]; then
-            echo "Flutter debug build failed with exit code $EXIT_CODE"
+            echo "=== ERROR: Flutter debug build failed ==="
             echo "=== tail of debug build log ==="
-            tail -100 build_debug.log
+            tail -200 build_debug.log
+            echo "=== Gradle daemon log ==="
+            cat ~/.gradle/daemon/*/daemon-*.log 2>/dev/null | tail -50 || echo "No daemon log"
           else
             echo "Debug build succeeded!"
             find . -name "*.apk" 2>/dev/null
