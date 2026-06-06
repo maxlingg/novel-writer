@@ -51,13 +51,14 @@ class Volume {
   }
 
   Volume copyWith({
+    String? projectId,
     String? title,
     String? description,
     int? sortOrder,
   }) {
     return Volume(
       id: id,
-      projectId: projectId,
+      projectId: projectId ?? this.projectId,
       title: title ?? this.title,
       description: description ?? this.description,
       sortOrder: sortOrder ?? this.sortOrder,

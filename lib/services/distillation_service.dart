@@ -142,7 +142,13 @@ class DistillationService extends ChangeNotifier {
     required ChapterService chapterService,
     required ProjectService projectService,
   }) async {
-    final distillation = _distillations.firstWhere((d) => d.id == distillationId);
+    final index = _distillations.indexWhere((d) => d.id == distillationId);
+    if (index < 0) {
+      _isProcessing = false;
+      notifyListeners();
+      return;
+    }
+    final distillation = _distillations[index];
 
     _isProcessing = true;
     notifyListeners();

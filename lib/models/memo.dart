@@ -58,6 +58,7 @@ class Memo {
   }
 
   Memo copyWith({
+    String? projectId,
     String? title,
     String? content,
     List<String>? tags,
@@ -65,7 +66,7 @@ class Memo {
   }) {
     return Memo(
       id: id,
-      projectId: projectId,
+      projectId: projectId ?? this.projectId,
       title: title ?? this.title,
       content: content ?? this.content,
       tags: tags ?? this.tags,

@@ -81,6 +81,7 @@ class Chapter {
   }
 
   Chapter copyWith({
+    String? projectId,
     String? volumeId,
     String? title,
     String? content,
@@ -91,7 +92,7 @@ class Chapter {
   }) {
     return Chapter(
       id: id,
-      projectId: projectId,
+      projectId: projectId ?? this.projectId,
       volumeId: volumeId ?? this.volumeId,
       title: title ?? this.title,
       content: content ?? this.content,

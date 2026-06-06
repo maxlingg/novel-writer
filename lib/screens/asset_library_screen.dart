@@ -20,6 +20,15 @@ class _AssetLibraryScreenState extends State<AssetLibraryScreen> {
   String _searchQuery = '';
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final assetService = context.read<AssetService>();
+      assetService.loadAssets(projectId: widget.projectId);
+    });
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
@@ -302,7 +311,8 @@ class _AssetLibraryScreenState extends State<AssetLibraryScreen> {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
         title: const Text('创建素材'),
         content: SizedBox(
           width: 500,
@@ -319,7 +329,7 @@ class _AssetLibraryScreenState extends State<AssetLibraryScreen> {
                       child: Text(_getTypeName(type)),
                     );
                   }).toList(),
-                  onChanged: (value) => selectedType = value!,
+                  onChanged: (value) => setDialogState(() => selectedType = value!),
                 ),
                 const SizedBox(height: AppSpacing.medium),
                 TextField(
@@ -352,7 +362,7 @@ class _AssetLibraryScreenState extends State<AssetLibraryScreen> {
                     DropdownMenuItem(value: AssetVisibility.project, child: Text('项目内')),
                     DropdownMenuItem(value: AssetVisibility.public, child: Text('公开')),
                   ],
-                  onChanged: (value) => visibility = value!,
+                  onChanged: (value) => setDialogState(() => visibility = value!),
                 ),
               ],
             ),
@@ -360,7 +370,7 @@ class _AssetLibraryScreenState extends State<AssetLibraryScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('取消'),
           ),
           ElevatedButton(
@@ -377,11 +387,12 @@ class _AssetLibraryScreenState extends State<AssetLibraryScreen> {
                 projectId: widget.projectId,
               );
 
-              if (mounted) Navigator.pop(context);
+              if (mounted) Navigator.pop(dialogContext);
             },
             child: const Text('创建'),
           ),
         ],
+        ),
       ),
     );
   }
@@ -400,7 +411,8 @@ class _AssetLibraryScreenState extends State<AssetLibraryScreen> {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
         title: const Text('编辑素材'),
         content: SizedBox(
           width: 500,
@@ -417,7 +429,7 @@ class _AssetLibraryScreenState extends State<AssetLibraryScreen> {
                       child: Text(_getTypeName(type)),
                     );
                   }).toList(),
-                  onChanged: (value) => selectedType = value!,
+                  onChanged: (value) => setDialogState(() => selectedType = value!),
                 ),
                 const SizedBox(height: AppSpacing.medium),
                 TextField(
@@ -450,7 +462,7 @@ class _AssetLibraryScreenState extends State<AssetLibraryScreen> {
                     DropdownMenuItem(value: AssetVisibility.project, child: Text('项目内')),
                     DropdownMenuItem(value: AssetVisibility.public, child: Text('公开')),
                   ],
-                  onChanged: (value) => visibility = value!,
+                  onChanged: (value) => setDialogState(() => visibility = value!),
                 ),
               ],
             ),
@@ -458,7 +470,7 @@ class _AssetLibraryScreenState extends State<AssetLibraryScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('取消'),
           ),
           ElevatedButton(
@@ -475,11 +487,12 @@ class _AssetLibraryScreenState extends State<AssetLibraryScreen> {
               );
 
               await assetService.updateAsset(updated);
-              if (mounted) Navigator.pop(context);
+              if (mounted) Navigator.pop(dialogContext);
             },
             child: const Text('保存'),
           ),
         ],
+        ),
       ),
     );
   }

@@ -114,6 +114,7 @@ class AIModelConfig {
     int? maxTokens,
     double? temperature,
     double? topP,
+    Map<String, dynamic>? extraParams,
     bool? isEnabled,
   }) {
     return AIModelConfig(
@@ -127,7 +128,7 @@ class AIModelConfig {
       maxTokens: maxTokens ?? this.maxTokens,
       temperature: temperature ?? this.temperature,
       topP: topP ?? this.topP,
-      extraParams: extraParams,
+      extraParams: extraParams ?? this.extraParams,
       isEnabled: isEnabled ?? this.isEnabled,
       createdAt: createdAt,
     );

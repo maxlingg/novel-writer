@@ -132,10 +132,10 @@ class SkillManager extends ChangeNotifier {
 
   /// 删除自定义技能
   Future<void> deleteSkill(String skillId) async {
-    final skill = _skills.firstWhere(
-      (s) => s.id == skillId,
-      orElse: () => Skill(name: ''),
-    );
+    final index = _skills.indexWhere((s) => s.id == skillId);
+    if (index < 0) return;
+
+    final skill = _skills[index];
     if (skill.isBuiltIn) {
       // 内置技能只能禁用，不能删除
       await toggleSkill(skillId, false);
@@ -150,7 +150,10 @@ class SkillManager extends ChangeNotifier {
 
   /// 切换技能启用状态
   Future<void> toggleSkill(String skillId, bool? enabled) async {
-    final skill = _skills.firstWhere((s) => s.id == skillId);
+    final index = _skills.indexWhere((s) => s.id == skillId);
+    if (index < 0) return;
+
+    final skill = _skills[index];
     final newEnabled = enabled ?? !skill.isEnabled;
     final updated = skill.copyWith(isEnabled: newEnabled);
     await updateSkill(updated);

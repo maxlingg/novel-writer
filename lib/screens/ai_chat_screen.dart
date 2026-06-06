@@ -93,9 +93,11 @@ class _AIChatScreenState extends State<AIChatScreen> {
       history: _messages,
     );
 
-    setState(() {
-      _messages.addAll(responses.where((r) => r.role != MessageRole.user));
-    });
+    if (mounted) {
+      setState(() {
+        _messages.addAll(responses.where((r) => r.role != MessageRole.user));
+      });
+    }
 
     _scrollToBottom();
   }

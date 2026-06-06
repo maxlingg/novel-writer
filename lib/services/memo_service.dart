@@ -78,7 +78,11 @@ class MemoService extends ChangeNotifier {
   /// 删除备忘录
   Future<void> deleteMemo(String projectId, String memoId) async {
     final projectDir = await FileHelper.getProjectDirectory(projectId);
-    await FileHelper.deleteFile('${projectDir.path}/memos/$memoId.json');
+    final filePath = '${projectDir.path}/memos/$memoId.json';
+    final file = File(filePath);
+    if (await file.exists()) {
+      await file.delete();
+    }
 
     _memos[projectId]?.removeWhere((m) => m.id == memoId);
     notifyListeners();

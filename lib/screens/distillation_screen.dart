@@ -19,6 +19,15 @@ class DistillationScreen extends StatefulWidget {
 
 class _DistillationScreenState extends State<DistillationScreen> {
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final distillationService = context.read<DistillationService>();
+      distillationService.initialize();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final distillationService = context.watch<DistillationService>();
     final theme = Theme.of(context);

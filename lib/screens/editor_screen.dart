@@ -115,10 +115,12 @@ class _EditorScreenState extends State<EditorScreen> {
         .read<ProjectService>()
         .updateWordCount(widget.projectId);
 
-    setState(() {
-      _chapter = updated;
-      _hasUnsavedChanges = false;
-    });
+    if (mounted) {
+      setState(() {
+        _chapter = updated;
+        _hasUnsavedChanges = false;
+      });
+    }
   }
 
   Future<void> _manualSave() async {
@@ -320,11 +322,19 @@ class _EditorScreenState extends State<EditorScreen> {
   }
 
   void _undo() {
-    _contentController.text = _contentController.text;
+    if (_contentController.text.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('撤销功能开发中...')),
+      );
+    }
   }
 
   void _redo() {
-    _contentController.text = _contentController.text;
+    if (_contentController.text.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('重做功能开发中...')),
+      );
+    }
   }
 
   Widget _buildStatusBar() {

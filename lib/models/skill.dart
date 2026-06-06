@@ -85,7 +85,9 @@ class Skill {
     String? systemPrompt,
     List<String>? requiredTools,
     Map<String, dynamic>? parameters,
+    bool? isBuiltIn,
     bool? isEnabled,
+    int? usageCount,
   }) {
     return Skill(
       id: id,
@@ -96,9 +98,9 @@ class Skill {
       systemPrompt: systemPrompt ?? this.systemPrompt,
       requiredTools: requiredTools ?? this.requiredTools,
       parameters: parameters ?? this.parameters,
-      isBuiltIn: isBuiltIn,
+      isBuiltIn: isBuiltIn ?? this.isBuiltIn,
       isEnabled: isEnabled ?? this.isEnabled,
-      usageCount: usageCount,
+      usageCount: usageCount ?? this.usageCount,
       createdAt: createdAt,
       updatedAt: DateTime.now(),
     );

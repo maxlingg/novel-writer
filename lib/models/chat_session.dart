@@ -51,13 +51,14 @@ class ChatSession {
   }
 
   ChatSession copyWith({
+    String? projectId,
     String? title,
     String? systemPrompt,
     String? modelConfigId,
   }) {
     return ChatSession(
       id: id,
-      projectId: projectId,
+      projectId: projectId ?? this.projectId,
       title: title ?? this.title,
       systemPrompt: systemPrompt ?? this.systemPrompt,
       modelConfigId: modelConfigId ?? this.modelConfigId,

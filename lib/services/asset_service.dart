@@ -88,7 +88,8 @@ class AssetService extends ChangeNotifier {
 
   /// 删除素材
   Future<void> deleteAsset(String assetId) async {
-    final asset = _assets.firstWhere((a) => a.id == assetId);
+    final index = _assets.indexWhere((a) => a.id == assetId);
+    if (index < 0) return;
     final appDir = await FileHelper.appDirectory;
     await FileHelper.deleteFile('${appDir.path}/assets/$assetId.json');
 
