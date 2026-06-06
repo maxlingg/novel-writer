@@ -41,39 +41,30 @@ jobs:
         run: flutter pub get
 
       - name: Build APK (release)
-        run: |
-          flutter build apk --release 2>&1 | tee build_release.log
-          echo "=== Build completed, checking output ==="
-          echo "Exit code: $?"
-          echo "=== APK files ==="
-          find . -name "*.apk" 2>/dev/null || echo "No APK found"
-          echo "=== build/ directory ==="
-          ls -laR build/ 2>/dev/null | head -80 || echo "No build dir"
+        run: flutter build apk --release
 
-      - name: Upload build logs
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-logs
-          path: build_release.log
-          retention-days: 7
-
-      - name: Upload APK
-        if: always()
+      - name: Check APK
         run: |
-          APK=$(find build/ -name "app-release.apk" 2>/dev/null | head -1)
-          if [ -n "$APK" ]; then
-            echo "APK found: $APK"
-            mkdir -p build/app/outputs/flutter-apk/
-            cp "$APK" build/app/outputs/flutter-apk/app-release.apk
-          else
-            echo "APK not found, listing all APK files:"
-            find . -name "*.apk" 2>/dev/null || echo "None"
+          echo "=== Searching for APK ==="
+          APK=$(find . -name "app-release.apk" -o -name "*.apk" 2>/dev/null | head -5)
+          if [ -z "$APK" ]; then
+            echo "No APK found!"
+            echo "=== Listing build directory ==="
+            find build/ -type f 2>/dev/null | head -30
+            echo "=== Listing android directory ==="
+            find android/ -name "*.apk" 2>/dev/null
             exit 1
           fi
+          echo "Found APK(s):"
+          echo "$APK"
+          # Copy to standard location
+          mkdir -p build/app/outputs/flutter-apk/
+          FIRST=$(echo "$APK" | head -1)
+          cp "$FIRST" build/app/outputs/flutter-apk/app-release.apk
+          echo "Copied to standard location"
+          ls -la build/app/outputs/flutter-apk/app-release.apk
 
       - name: Upload APK artifact
-        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: release-apk
@@ -81,7 +72,6 @@ jobs:
           retention-days: 30
 
       - name: Create Release
-        if: success()
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.0.${{ github.run_number }}
