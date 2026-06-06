@@ -68,7 +68,7 @@ class NovelWriterApp extends StatelessWidget {
       ),
 
       // Card
-      cardTheme: CardThemeData(
+      cardTheme: CardTheme(
         elevation: 1,
         shadowColor: Colors.black.withOpacity(0.08),
         shape: RoundedRectangleBorder(
@@ -151,7 +151,7 @@ class NovelWriterApp extends StatelessWidget {
       ),
 
       // Dialog
-      dialogTheme: DialogThemeData(
+      dialogTheme: DialogTheme(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.xLarge),
         ),
@@ -213,7 +213,7 @@ class NovelWriterApp extends StatelessWidget {
       ),
 
       // Card
-      cardTheme: CardThemeData(
+      cardTheme: CardTheme(
         elevation: 1,
         shadowColor: Colors.black.withOpacity(0.16),
         shape: RoundedRectangleBorder(
@@ -296,7 +296,7 @@ class NovelWriterApp extends StatelessWidget {
       ),
 
       // Dialog
-      dialogTheme: DialogThemeData(
+      dialogTheme: DialogTheme(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.xLarge),
         ),

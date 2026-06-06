@@ -182,7 +182,7 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         },
       ),
-      floatingActionButton: ExtendedFloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: _createProject,
         icon: const Icon(Icons.add),
         label: const Text('创建项目'),
