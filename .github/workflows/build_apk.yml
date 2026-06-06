@@ -80,9 +80,7 @@ jobs:
         run: |
           gh release create "v1.0.${{ github.run_number }}" \
             --title "Release v1.0.${{ github.run_number }}" \
-            --notes "Novel Writer v1.0.${{ github.run_number }}
-
-自动构建于 ${{ github.event.head_commit.timestamp }}" \
+            --notes "Novel Writer v1.0.${{ github.run_number }} - 自动构建于 ${{ github.event.head_commit.timestamp }}" \
             build/app/outputs/flutter-apk/app-release.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
