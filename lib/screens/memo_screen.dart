@@ -84,23 +84,39 @@ class _MemoScreenState extends State<MemoScreen> {
     }
   }
 
+  String _searchQuery = '';
+
   @override
   Widget build(BuildContext context) {
+    // 按搜索过滤备忘录
+    final filteredMemos = _searchQuery.isEmpty
+        ? _memos
+        : _memos.where((m) =>
+            m.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+            m.content.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+            m.category.toLowerCase().contains(_searchQuery.toLowerCase())).toList();
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('备忘录'),
         actions: [
           IconButton(
             icon: const Icon(Icons.search),
-            onPressed: () {
-              // TODO: 搜索备忘录
+            onPressed: () async {
+              final query = await showSearch<String>(
+                context: context,
+                delegate: _MemoSearchDelegate(_memos),
+              );
+              if (query != null) {
+                setState(() => _searchQuery = query);
+              }
             },
           ),
         ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _memos.isEmpty
+          : filteredMemos.isEmpty
               ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -125,9 +141,9 @@ class _MemoScreenState extends State<MemoScreen> {
                 )
               : ListView.builder(
                   padding: const EdgeInsets.all(12),
-                  itemCount: _memos.length,
+                  itemCount: filteredMemos.length,
                   itemBuilder: (context, index) {
-                    final memo = _memos[index];
+                    final memo = filteredMemos[index];
                     return Card(
                       margin: const EdgeInsets.only(bottom: 8),
                       child: ListTile(
@@ -287,6 +303,65 @@ class _MemoEditorDialogState extends State<_MemoEditorDialog> {
           child: const Text('保存'),
         ),
       ],
+    );
+  }
+}
+
+/// 备忘录搜索代理
+class _MemoSearchDelegate extends SearchDelegate<String> {
+  final List<Memo> memos;
+
+  _MemoSearchDelegate(this.memos);
+
+  @override
+  List<Widget> buildActions(BuildContext context) {
+    return [
+      IconButton(
+        icon: const Icon(Icons.clear),
+        onPressed: () => query = '',
+      ),
+    ];
+  }
+
+  @override
+  Widget buildLeading(BuildContext context) {
+    return IconButton(
+      icon: const Icon(Icons.arrow_back),
+      onPressed: () => close(context, ''),
+    );
+  }
+
+  @override
+  Widget buildResults(BuildContext context) {
+    return _buildSearchResults();
+  }
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    return _buildSearchResults();
+  }
+
+  Widget _buildSearchResults() {
+    final results = query.isEmpty
+        ? memos
+        : memos.where((m) =>
+            m.title.toLowerCase().contains(query.toLowerCase()) ||
+            m.content.toLowerCase().contains(query.toLowerCase())).toList();
+
+    return ListView.builder(
+      itemCount: results.length,
+      itemBuilder: (context, index) {
+        final memo = results[index];
+        return ListTile(
+          title: Text(memo.title),
+          subtitle: Text(
+            memo.content,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          onTap: () => close(context, memo.title),
+        );
+      },
     );
   }
 }

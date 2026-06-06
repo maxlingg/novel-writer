@@ -24,13 +24,44 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _createProject() async {
-    final result = await showDialog<String>(
+    final result = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) => const _CreateProjectDialog(),
     );
 
-    if (result != null && result.isNotEmpty) {
-      await context.read<ProjectService>().createProject(name: result);
+    if (result != null && result['name'] != null && (result['name'] as String).isNotEmpty) {
+      await context.read<ProjectService>().createProject(
+        name: result['name'] as String,
+        description: result['description'] as String? ?? '',
+        genre: result['genre'] as String? ?? '',
+      );
+    }
+  }
+
+  Future<void> _deleteProject(String projectId, String projectName) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('删除项目'),
+        content: Text('确定要删除项目「$projectName」吗？此操作无法撤销。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('取消'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('删除'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await context.read<ProjectService>().deleteProject(projectId);
     }
   }
 
@@ -45,24 +76,28 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: () {
               Navigator.pushNamed(context, AppRoutes.assetLibrary);
             },
+            tooltip: '素材库',
           ),
           IconButton(
             icon: const Icon(Icons.auto_awesome),
             onPressed: () {
               Navigator.pushNamed(context, AppRoutes.distillation);
             },
+            tooltip: '内容蒸馏',
           ),
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
               Navigator.pushNamed(context, AppRoutes.search);
             },
+            tooltip: '搜索',
           ),
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () {
               Navigator.pushNamed(context, AppRoutes.settings);
             },
+            tooltip: '设置',
           ),
         ],
       ),
@@ -97,26 +132,33 @@ class _HomeScreenState extends State<HomeScreen> {
             );
           }
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(AppConstants.defaultPadding),
-            itemCount: projects.length,
-            itemBuilder: (context, index) {
-              return ProjectCard(
-                project: projects[index],
-                onTap: () {
-                  Navigator.pushNamed(
-                    context,
-                    AppRoutes.project,
-                    arguments: projects[index].id,
-                  );
-                },
-              );
-            },
+          return RefreshIndicator(
+            onRefresh: _loadProjects,
+            child: ListView.builder(
+              padding: const EdgeInsets.all(AppConstants.defaultPadding),
+              itemCount: projects.length,
+              itemBuilder: (context, index) {
+                return ProjectCard(
+                  project: projects[index],
+                  onTap: () {
+                    Navigator.pushNamed(
+                      context,
+                      AppRoutes.project,
+                      arguments: projects[index].id,
+                    );
+                  },
+                  onLongPress: () {
+                    _deleteProject(projects[index].id, projects[index].name);
+                  },
+                );
+              },
+            ),
           );
         },
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _createProject,
+        tooltip: '创建项目',
         child: const Icon(Icons.add),
       ),
     );
@@ -188,7 +230,11 @@ class _CreateProjectDialogState extends State<_CreateProjectDialog> {
         ),
         FilledButton(
           onPressed: () {
-            Navigator.pop(context, _nameController.text);
+            Navigator.pop(context, {
+              'name': _nameController.text,
+              'description': _descriptionController.text,
+              'genre': _genreController.text,
+            });
           },
           child: const Text('创建'),
         ),

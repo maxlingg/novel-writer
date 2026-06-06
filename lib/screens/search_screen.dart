@@ -142,7 +142,6 @@ class _SearchScreenState extends State<SearchScreen> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   onTap: () {
-                    // TODO: 导航到对应页面
                     if (result.type == SearchResultType.chapter) {
                       Navigator.pushNamed(
                         context,
@@ -151,6 +150,12 @@ class _SearchScreenState extends State<SearchScreen> {
                           'projectId': result.projectId,
                           'chapterId': result.id,
                         },
+                      );
+                    } else if (result.type == SearchResultType.memo) {
+                      Navigator.pushNamed(
+                        context,
+                        AppRoutes.memo,
+                        arguments: result.projectId,
                       );
                     }
                   },

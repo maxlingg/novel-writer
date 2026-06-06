@@ -56,7 +56,22 @@ class _AIChatScreenState extends State<AIChatScreen> {
 
   Future<void> _sendMessage() async {
     final text = _messageController.text.trim();
-    if (text.isEmpty || _selectedModel == null) return;
+    if (text.isEmpty) return;
+
+    if (_selectedModel == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('请先配置AI模型'),
+          action: SnackBarAction(
+            label: '去设置',
+            onPressed: () {
+              Navigator.pushNamed(context, AppRoutes.settings);
+            },
+          ),
+        ),
+      );
+      return;
+    }
 
     _messageController.clear();
 

@@ -5,6 +5,7 @@ import '../models/project.dart';
 import '../models/volume.dart';
 import '../models/chapter.dart';
 import '../services/project_service.dart';
+import '../services/chapter_service.dart';
 import '../widgets/chapter_tile.dart';
 
 /// 项目详情页面（卷/章节列表）
@@ -78,6 +79,52 @@ class _ProjectScreenState extends State<ProjectScreen> {
     }
   }
 
+  Future<void> _deleteChapter(Chapter chapter) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('删除章节'),
+        content: Text('确定要删除章节「${chapter.title}」吗？此操作无法撤销。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('取消'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('删除'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && widget.projectId != null) {
+      await context.read<ChapterService>().deleteChapter(
+            widget.projectId!,
+            chapter.id,
+          );
+      _loadData();
+    }
+  }
+
+  Future<void> _editProjectName() async {
+    if (_project == null) return;
+
+    final name = await showDialog<String>(
+      context: context,
+      builder: (context) => _EditProjectDialog(project: _project!),
+    );
+
+    if (name != null && name.isNotEmpty) {
+      final updated = _project!.copyWith(name: name);
+      await context.read<ProjectService>().updateProject(updated);
+      _loadData();
+    }
+  }
+
   Future<void> _openChapter(Chapter chapter) async {
     Navigator.pushNamed(
       context,
@@ -96,6 +143,11 @@ class _ProjectScreenState extends State<ProjectScreen> {
         title: Text(_project?.name ?? '项目详情'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.edit),
+            onPressed: _editProjectName,
+            tooltip: '编辑项目',
+          ),
+          IconButton(
             icon: const Icon(Icons.chat),
             onPressed: () {
               Navigator.pushNamed(
@@ -104,6 +156,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
                 arguments: widget.projectId,
               );
             },
+            tooltip: 'AI助手',
           ),
           PopupMenuButton<String>(
             onSelected: (value) {
@@ -136,6 +189,9 @@ class _ProjectScreenState extends State<ProjectScreen> {
                     arguments: widget.projectId,
                   );
                   break;
+                case 'addVolume':
+                  _addVolume();
+                  break;
               }
             },
             itemBuilder: (context) => [
@@ -143,6 +199,8 @@ class _ProjectScreenState extends State<ProjectScreen> {
               const PopupMenuItem(value: 'search', child: Text('搜索')),
               const PopupMenuItem(value: 'assets', child: Text('素材库')),
               const PopupMenuItem(value: 'distillation', child: Text('内容蒸馏')),
+              const PopupMenuDivider(),
+              const PopupMenuItem(value: 'addVolume', child: Text('添加卷')),
             ],
           ),
         ],
@@ -152,6 +210,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
           : _buildContent(),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _addChapter(),
+        tooltip: '添加章节',
         child: const Icon(Icons.add),
       ),
     );
@@ -171,9 +230,27 @@ class _ProjectScreenState extends State<ProjectScreen> {
         Expanded(
           child: _chapters.isEmpty
               ? Center(
-                  child: Text(
-                    '还没有章节',
-                    style: Theme.of(context).textTheme.bodyLarge,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.menu_book,
+                        size: 64,
+                        color: Theme.of(context).disabledColor,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        '还没有章节',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '点击右下角按钮添加章节',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context).disabledColor,
+                            ),
+                      ),
+                    ],
                   ),
                 )
               : ListView.builder(
@@ -182,6 +259,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
                     return ChapterTile(
                       chapter: _chapters[index],
                       onTap: () => _openChapter(_chapters[index]),
+                      onLongPress: () => _deleteChapter(_chapters[index]),
                     );
                   },
                 ),
@@ -219,6 +297,13 @@ class _ProjectScreenState extends State<ProjectScreen> {
                 label: Text('${_chapters.length} 章'),
                 avatar: const Icon(Icons.menu_book, size: 16),
               ),
+              if (_volumes.isNotEmpty) ...[
+                const SizedBox(width: 8),
+                Chip(
+                  label: Text('${_volumes.length} 卷'),
+                  avatar: const Icon(Icons.folder, size: 16),
+                ),
+              ],
             ],
           ),
         ],
@@ -305,6 +390,72 @@ class _AddChapterDialogState extends State<_AddChapterDialog> {
         FilledButton(
           onPressed: () => Navigator.pop(context, _controller.text),
           child: const Text('添加'),
+        ),
+      ],
+    );
+  }
+}
+
+class _EditProjectDialog extends StatefulWidget {
+  final Project project;
+
+  const _EditProjectDialog({required this.project});
+
+  @override
+  State<_EditProjectDialog> createState() => _EditProjectDialogState();
+}
+
+class _EditProjectDialogState extends State<_EditProjectDialog> {
+  late TextEditingController _nameController;
+  late TextEditingController _descController;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.project.name);
+    _descController = TextEditingController(text: widget.project.description);
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _descController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('编辑项目'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: _nameController,
+            decoration: const InputDecoration(
+              labelText: '项目名称',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _descController,
+            decoration: const InputDecoration(
+              labelText: '简介',
+              border: OutlineInputBorder(),
+            ),
+            maxLines: 3,
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('取消'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, _nameController.text),
+          child: const Text('保存'),
         ),
       ],
     );
