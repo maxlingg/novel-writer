@@ -40,62 +40,35 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
-      - name: Analyze code
-        run: flutter analyze --no-fatal-infos --no-fatal-warnings
-        continue-on-error: true
-
-      - name: Build APK (debug)
-        run: |
-          flutter build apk --debug 2>&1 | tee build_debug.log
-
       - name: Build APK (release)
         run: |
           flutter build apk --release 2>&1 | tee build_release.log
-
-      - name: List build output
-        if: always()
-        run: |
-          echo "=== Find all APK files ==="
+          echo "=== Build completed, checking output ==="
+          echo "Exit code: $?"
+          echo "=== APK files ==="
           find . -name "*.apk" 2>/dev/null || echo "No APK found"
-          echo "=== Default APK path ==="
-          ls -laR build/app/outputs/flutter-apk/ 2>/dev/null || echo "Default path not found"
-          echo "=== Build directory tree ==="
-          find build/ -type f -name "*.apk" -o -name "*.aab" 2>/dev/null | head -20
-          echo "=== Android build output ==="
-          find android/ -name "*.apk" 2>/dev/null || echo "No APK in android dir"
-          echo "=== Full build tree ==="
-          ls -laR build/app/outputs/ 2>/dev/null || echo "No outputs dir"
-          echo "=== Gradle APK output ==="
-          find build/app/outputs/apk/ -type f 2>/dev/null || echo "No gradle apk dir"
-          echo "=== Top-level build ==="
-          ls -la build/ 2>/dev/null || echo "No build dir"
-          echo "=== build/app ==="
-          ls -laR build/app/ 2>/dev/null | head -50 || echo "No build/app dir"
+          echo "=== build/ directory ==="
+          ls -laR build/ 2>/dev/null | head -80 || echo "No build dir"
 
       - name: Upload build logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: build-logs
-          path: |
-            build_debug.log
-            build_release.log
+          path: build_release.log
           retention-days: 7
 
-      - name: Check APK file
+      - name: Upload APK
         if: always()
         run: |
           APK=$(find build/ -name "app-release.apk" 2>/dev/null | head -1)
-          if [ -n "$APK" ] && [ -f "$APK" ]; then
+          if [ -n "$APK" ]; then
             echo "APK found: $APK"
-            echo "Size: $(du -h "$APK" | cut -f1)"
-            # Copy to expected location
             mkdir -p build/app/outputs/flutter-apk/
             cp "$APK" build/app/outputs/flutter-apk/app-release.apk
           else
-            echo "No release APK found!"
-            echo "Searching for any APK files..."
-            find build/ -name "*.apk" 2>/dev/null || echo "No APK files at all"
+            echo "APK not found, listing all APK files:"
+            find . -name "*.apk" 2>/dev/null || echo "None"
             exit 1
           fi
 
@@ -117,8 +90,6 @@ jobs:
             Novel Writer v1.0.${{ github.run_number }}
 
             自动构建于 ${{ github.event.head_commit.timestamp }}
-
-            提交信息: ${{ github.event.head_commit.message }}
           files: build/app/outputs/flutter-apk/app-release.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
