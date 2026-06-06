@@ -6,7 +6,6 @@ import '../models/chapter.dart';
 import '../services/chapter_service.dart';
 import '../services/project_service.dart';
 import '../services/settings_service.dart';
-import '../widgets/custom_app_bar.dart';
 
 /// 编辑器页面
 class EditorScreen extends StatefulWidget {
@@ -31,6 +30,7 @@ class _EditorScreenState extends State<EditorScreen> {
   bool _hasUnsavedChanges = false;
   bool _isLoading = true;
   int _wordCount = 0;
+  DateTime? _lastSavedTime;
 
   @override
   void initState() {
@@ -119,6 +119,7 @@ class _EditorScreenState extends State<EditorScreen> {
       setState(() {
         _chapter = updated;
         _hasUnsavedChanges = false;
+        _lastSavedTime = DateTime.now();
       });
     }
   }
@@ -182,139 +183,49 @@ class _EditorScreenState extends State<EditorScreen> {
     _contentController.notifyListeners();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: CustomAppBar(
-        title: _chapter?.title ?? '编辑器',
-        actions: [
-          if (_hasUnsavedChanges)
-            const Padding(
-              padding: EdgeInsets.only(right: 8),
-              child: Center(
-                child: Text(
-                  '未保存',
-                  style: TextStyle(color: Colors.orange, fontSize: 12),
-                ),
-              ),
-            ),
-          IconButton(
-            icon: const Icon(Icons.save),
-            onPressed: _manualSave,
-          ),
-          IconButton(
-            icon: const Icon(Icons.chat),
-            onPressed: () {
-              Navigator.pushNamed(
-                context,
-                AppRoutes.aiChat,
-                arguments: widget.projectId,
-              );
-            },
-          ),
-        ],
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _chapter == null
-              ? const Center(child: Text('章节不存在'))
-              : Column(
-                  children: [
-                    // 工具栏
-                    _buildToolbar(),
-                    // 标题编辑
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppConstants.defaultPadding,
-                        vertical: 4,
-                      ),
-                      child: TextField(
-                        controller: _titleController,
-                        style: Theme.of(context).textTheme.titleLarge,
-                        decoration: const InputDecoration(
-                          border: InputBorder.none,
-                          hintText: '章节标题',
-                        ),
-                        onChanged: (value) {
-                          if (_chapter != null) {
-                            _chapter = _chapter!.copyWith(title: value);
-                            _hasUnsavedChanges = true;
-                          }
-                        },
-                      ),
-                    ),
-                    const Divider(height: 1),
-                    // 编辑区域
-                    Expanded(
-                      child: TextField(
-                        controller: _contentController,
-                        maxLines: null,
-                        expands: true,
-                        style: TextStyle(
-                          fontSize: context
-                              .watch<SettingsService>()
-                              .editorFontSize,
-                          height: 1.8,
-                        ),
-                        decoration: const InputDecoration(
-                          border: InputBorder.none,
-                          hintText: '开始写作...',
-                          contentPadding: EdgeInsets.symmetric(
-                            horizontal: AppConstants.defaultPadding,
-                            vertical: AppConstants.defaultPadding,
-                          ),
-                        ),
-                      ),
-                    ),
-                    // 底部状态栏
-                    _buildStatusBar(),
-                  ],
-                ),
-    );
+  String _chapterStatusLabel(ChapterStatus status) {
+    switch (status) {
+      case ChapterStatus.writing:
+        return '写作中';
+      case ChapterStatus.completed:
+        return '已完成';
+      case ChapterStatus.revised:
+        return '已修订';
+      default:
+        return '草稿';
+    }
   }
 
-  Widget _buildToolbar() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      height: 44,
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.format_bold, size: 20),
-            onPressed: () => _insertFormatting('**', '**'),
-            tooltip: '加粗',
+  void _showTitleEditDialog() {
+    final controller = TextEditingController(text: _chapter?.title ?? '');
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('编辑标题'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(
+            hintText: '输入章节标题',
           ),
-          IconButton(
-            icon: const Icon(Icons.format_italic, size: 20),
-            onPressed: () => _insertFormatting('*', '*'),
-            tooltip: '斜体',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('取消'),
           ),
-          IconButton(
-            icon: const Icon(Icons.format_quote, size: 20),
-            onPressed: () => _insertLinePrefix('> '),
-            tooltip: '引用',
-          ),
-          const VerticalDivider(width: 1),
-          IconButton(
-            icon: const Icon(Icons.format_list_bulleted, size: 20),
-            onPressed: () => _insertLinePrefix('- '),
-            tooltip: '无序列表',
-          ),
-          IconButton(
-            icon: const Icon(Icons.format_list_numbered, size: 20),
-            onPressed: () => _insertLinePrefix('1. '),
-            tooltip: '有序列表',
-          ),
-          const VerticalDivider(width: 1),
-          IconButton(
-            icon: const Icon(Icons.undo, size: 20),
-            onPressed: () => _undo(),
-            tooltip: '撤销',
-          ),
-          IconButton(
-            icon: const Icon(Icons.redo, size: 20),
-            onPressed: () => _redo(),
-            tooltip: '重做',
+          FilledButton(
+            onPressed: () {
+              final newTitle = controller.text.trim();
+              if (newTitle.isNotEmpty && _chapter != null) {
+                setState(() {
+                  _chapter = _chapter!.copyWith(title: newTitle);
+                  _hasUnsavedChanges = true;
+                });
+              }
+              Navigator.pop(ctx);
+            },
+            child: const Text('确定'),
           ),
         ],
       ),
@@ -337,37 +248,307 @@ class _EditorScreenState extends State<EditorScreen> {
     }
   }
 
-  Widget _buildStatusBar() {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final settings = context.watch<SettingsService>();
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppConstants.defaultPadding,
-        vertical: 4,
-      ),
-      decoration: BoxDecoration(
-        border: Border(
-          top: BorderSide(color: Theme.of(context).dividerColor),
+
+    if (_isLoading) {
+      return Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_chapter == null) {
+      return Scaffold(
+        body: Center(child: Text('章节不存在')),
+      );
+    }
+
+    return Scaffold(
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildHeader(theme),
+            _buildToolbar(theme),
+            Divider(height: 1, color: theme.dividerColor.withAlpha(80)),
+            Expanded(child: _buildEditor(theme, settings)),
+            Divider(height: 1, color: theme.dividerColor.withAlpha(80)),
+            _buildStatusBar(theme, settings),
+          ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(ThemeData theme) {
+    return Container(
+      color: theme.colorScheme.surfaceContainerLow,
+      padding: EdgeInsets.fromLTRB(
+          AppSpacing.small, AppSpacing.small, AppSpacing.medium, AppSpacing.small),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.arrow_back, size: 20),
+                onPressed: () => Navigator.pop(context),
+                padding: EdgeInsets.zero,
+                constraints: BoxConstraints.tightFor(
+                  width: AppSpacing.large,
+                  height: AppSpacing.large,
+                ),
+              ),
+              SizedBox(width: AppSpacing.small),
+              Expanded(
+                child: GestureDetector(
+                  onTap: _showTitleEditDialog,
+                  child: Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          _chapter!.title,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: theme.colorScheme.onSurface,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      SizedBox(width: AppSpacing.xSmall),
+                      Icon(
+                        Icons.edit,
+                        size: 14,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: AppSpacing.xSmall),
+          Padding(
+            padding: EdgeInsets.only(left: AppSpacing.large + AppSpacing.small),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.text_fields,
+                  size: 14,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                SizedBox(width: 4),
+                Text(
+                  '$_wordCount 字',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                SizedBox(width: AppSpacing.small),
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: AppSpacing.small,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.secondaryContainer,
+                    borderRadius: BorderRadius.circular(AppRadius.full),
+                  ),
+                  child: Text(
+                    _chapterStatusLabel(_chapter!.status),
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onSecondaryContainer,
+                    ),
+                  ),
+                ),
+                SizedBox(width: AppSpacing.small),
+                if (_hasUnsavedChanges)
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: Colors.orange,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      SizedBox(width: 4),
+                      Text(
+                        '未保存',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: Colors.orange,
+                        ),
+                      ),
+                    ],
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildToolbar(ThemeData theme) {
+    return Container(
+      color: theme.colorScheme.surfaceContainerHighest,
+      height: 48,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: EdgeInsets.symmetric(
+          horizontal: AppSpacing.small,
+          vertical: AppSpacing.xSmall,
+        ),
+        child: Row(
+          children: [
+            ActionChip(
+              avatar: Icon(Icons.format_bold, size: 18),
+              label: const Text('B'),
+              onPressed: () => _insertFormatting('**', '**'),
+              visualDensity: VisualDensity.compact,
+            ),
+            SizedBox(width: AppSpacing.xSmall),
+            ActionChip(
+              avatar: Icon(Icons.format_italic, size: 18),
+              label: const Text('I'),
+              onPressed: () => _insertFormatting('*', '*'),
+              visualDensity: VisualDensity.compact,
+            ),
+            SizedBox(width: AppSpacing.xSmall),
+            ActionChip(
+              avatar: Icon(Icons.format_quote, size: 18),
+              label: const Text('"'),
+              onPressed: () => _insertLinePrefix('> '),
+              visualDensity: VisualDensity.compact,
+            ),
+            SizedBox(width: AppSpacing.xSmall),
+            ActionChip(
+              avatar: Icon(Icons.format_list_bulleted, size: 18),
+              label: const Text('无序列表'),
+              onPressed: () => _insertLinePrefix('- '),
+              visualDensity: VisualDensity.compact,
+            ),
+            SizedBox(width: AppSpacing.xSmall),
+            ActionChip(
+              avatar: Icon(Icons.format_list_numbered, size: 18),
+              label: const Text('有序列表'),
+              onPressed: () => _insertLinePrefix('1. '),
+              visualDensity: VisualDensity.compact,
+            ),
+            SizedBox(width: AppSpacing.xSmall),
+            ActionChip(
+              avatar: Icon(Icons.horizontal_rule, size: 18),
+              label: const Text('分隔线'),
+              onPressed: () => _insertLinePrefix('---\n'),
+              visualDensity: VisualDensity.compact,
+            ),
+            SizedBox(width: AppSpacing.xSmall),
+            ActionChip(
+              avatar: Icon(Icons.undo, size: 18),
+              label: const Text('撤销'),
+              onPressed: _undo,
+              visualDensity: VisualDensity.compact,
+            ),
+            SizedBox(width: AppSpacing.xSmall),
+            ActionChip(
+              avatar: Icon(Icons.redo, size: 18),
+              label: const Text('重做'),
+              onPressed: _redo,
+              visualDensity: VisualDensity.compact,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEditor(ThemeData theme, SettingsService settings) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.large,
+        vertical: AppSpacing.medium,
+      ),
+      child: TextField(
+        controller: _contentController,
+        maxLines: null,
+        expands: true,
+        style: TextStyle(
+          fontSize: 18,
+          height: 1.6,
+          color: theme.colorScheme.onSurface,
+        ),
+        decoration: const InputDecoration(
+          border: InputBorder.none,
+          hintText: '开始写作...',
+          contentPadding: EdgeInsets.zero,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusBar(ThemeData theme, SettingsService settings) {
+    final lastSavedText = _lastSavedTime != null
+        ? '${_lastSavedTime!.hour.toString().padLeft(2, '0')}:${_lastSavedTime!.minute.toString().padLeft(2, '0')}'
+        : '--:--';
+
+    return Container(
+      color: theme.colorScheme.surfaceContainerLow,
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSpacing.medium,
+        vertical: AppSpacing.small,
       ),
       child: Row(
         children: [
-          if (settings.showWordCount)
+          if (settings.showWordCount) ...[
+            Icon(
+              Icons.text_fields,
+              size: 14,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+            SizedBox(width: 4),
             Text(
               '$_wordCount 字',
-              style: Theme.of(context).textTheme.bodySmall,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
-          if (settings.showWordCount)
-            const SizedBox(width: 16),
-          Text(
-            '${_contentController.text.length} 字符',
-            style: Theme.of(context).textTheme.bodySmall,
+            SizedBox(width: AppSpacing.small),
+            Text(
+              '|',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.dividerColor,
+              ),
+            ),
+            SizedBox(width: AppSpacing.small),
+          ],
+          Icon(
+            _hasUnsavedChanges ? Icons.sync : Icons.check_circle_outline,
+            size: 14,
+            color: _hasUnsavedChanges ? Colors.orange : Colors.green,
           ),
-          const Spacer(),
+          SizedBox(width: 4),
           Text(
             _hasUnsavedChanges ? '未保存' : '已保存',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: _hasUnsavedChanges ? Colors.orange : Colors.green,
-                ),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: _hasUnsavedChanges ? Colors.orange : Colors.green,
+            ),
+          ),
+          const Spacer(),
+          Icon(
+            Icons.access_time,
+            size: 14,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+          SizedBox(width: 4),
+          Text(
+            lastSavedText,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),

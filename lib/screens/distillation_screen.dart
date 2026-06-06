@@ -47,55 +47,104 @@ class _DistillationScreenState extends State<DistillationScreen> {
           ),
         ],
       ),
-      body: distillationService.isProcessing
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+      body: Column(
+        children: [
+          // 模板列表
+          if (distillationService.templates.isNotEmpty) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.medium,
+                AppSpacing.medium,
+                AppSpacing.medium,
+                AppSpacing.xSmall,
+              ),
+              child: Row(
                 children: [
-                  const CircularProgressIndicator(),
-                  const SizedBox(height: AppSpacing.medium),
+                  Icon(Icons.auto_awesome, size: 20, color: theme.colorScheme.primary),
+                  const SizedBox(width: AppSpacing.small),
                   Text(
-                    '正在蒸馏内容...',
-                    style: theme.textTheme.titleMedium,
+                    '蒸馏模板',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      color: theme.colorScheme.primary,
+                    ),
                   ),
                 ],
               ),
-            )
-          : filteredDistillations.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.auto_awesome_outlined,
-                        size: 64,
-                        color: theme.colorScheme.outline,
-                      ),
-                      const SizedBox(height: AppSpacing.medium),
-                      Text(
-                        '暂无蒸馏任务',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          color: theme.colorScheme.outline,
+            ),
+            SizedBox(
+              height: 100,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.medium),
+                itemCount: distillationService.templates.length,
+                itemBuilder: (context, index) =>
+                    _buildTemplateCard(context, distillationService.templates[index]),
+              ),
+            ),
+            const Divider(height: 1),
+          ],
+
+          // 蒸馏任务列表
+          Expanded(
+            child: distillationService.isProcessing
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const CircularProgressIndicator(),
+                        const SizedBox(height: AppSpacing.medium),
+                        Text(
+                          '正在蒸馏内容...',
+                          style: theme.textTheme.titleMedium,
+                        ),
+                      ],
+                    ),
+                  )
+                : filteredDistillations.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.auto_awesome_outlined,
+                              size: 72,
+                              color: theme.colorScheme.outline.withOpacity(0.5),
+                            ),
+                            const SizedBox(height: AppSpacing.medium),
+                            Text(
+                              '暂无蒸馏任务',
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                color: theme.colorScheme.outline,
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.small),
+                            Text(
+                              '创建蒸馏任务，使用 AI 提炼内容精华',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.outline.withOpacity(0.7),
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.large),
+                            ElevatedButton.icon(
+                              onPressed: () => _showCreateDialog(context, distillationService),
+                              icon: const Icon(Icons.add),
+                              label: const Text('创建蒸馏任务'),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(AppSpacing.medium),
+                        itemCount: filteredDistillations.length,
+                        itemBuilder: (context, index) => _buildDistillationCard(
+                          context,
+                          filteredDistillations[index],
+                          distillationService,
                         ),
                       ),
-                      const SizedBox(height: AppSpacing.small),
-                      ElevatedButton.icon(
-                        onPressed: () => _showCreateDialog(context, distillationService),
-                        icon: const Icon(Icons.add),
-                        label: const Text('创建蒸馏任务'),
-                      ),
-                    ],
-                  ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(AppSpacing.medium),
-                  itemCount: filteredDistillations.length,
-                  itemBuilder: (context, index) => _buildDistillationCard(
-                    context,
-                    filteredDistillations[index],
-                    distillationService,
-                  ),
-                ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -120,12 +169,13 @@ class _DistillationScreenState extends State<DistillationScreen> {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: _getStatusColor(distillation.status, theme),
-                    borderRadius: BorderRadius.circular(10),
+                    color: _getStatusColor(distillation.status, theme).withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(AppRadius.medium),
                   ),
                   child: Icon(
                     _getStatusIcon(distillation.status),
-                    color: theme.colorScheme.onPrimaryContainer,
+                    color: _getStatusColor(distillation.status, theme),
+                    size: 22,
                   ),
                 ),
 
@@ -144,14 +194,32 @@ class _DistillationScreenState extends State<DistillationScreen> {
                       Row(
                         children: [
                           Chip(
-                            label: Text(_getTypeName(distillation.type)),
+                            label: Text(
+                              _getStatusText(distillation.status),
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: _getStatusColor(distillation.status, theme),
+                              ),
+                            ),
+                            backgroundColor: _getStatusColor(distillation.status, theme)
+                                .withOpacity(0.12),
                             visualDensity: VisualDensity.compact,
+                            side: BorderSide.none,
+                            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.small),
                           ),
                           const SizedBox(width: AppSpacing.small),
-                          Text(
-                            _getStatusText(distillation.status),
-                            style: theme.textTheme.labelMedium?.copyWith(
-                              color: _getStatusColor(distillation.status, theme),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.small,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.surfaceContainerHighest,
+                              borderRadius: BorderRadius.circular(AppRadius.small),
+                            ),
+                            child: Text(
+                              _getTypeName(distillation.type),
+                              style: theme.textTheme.labelSmall,
                             ),
                           ),
                         ],
@@ -218,8 +286,12 @@ class _DistillationScreenState extends State<DistillationScreen> {
             if (distillation.status == DistillationStatus.processing &&
                 distillation.progress != null) ...[
               const SizedBox(height: AppSpacing.medium),
-              LinearProgressIndicator(
-                value: distillation.progress,
+              ClipRRect(
+                borderRadius: BorderRadius.circular(AppRadius.small),
+                child: LinearProgressIndicator(
+                  value: distillation.progress,
+                  minHeight: 6,
+                ),
               ),
               const SizedBox(height: AppSpacing.xSmall),
               Text(
@@ -237,7 +309,7 @@ class _DistillationScreenState extends State<DistillationScreen> {
                 padding: const EdgeInsets.all(AppSpacing.small),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.errorContainer,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadius.small),
                 ),
                 child: Text(
                   distillation.error!,
@@ -257,7 +329,7 @@ class _DistillationScreenState extends State<DistillationScreen> {
                 padding: const EdgeInsets.all(AppSpacing.medium),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadius.small),
                 ),
                 child: Text(
                   distillation.content,
@@ -273,16 +345,108 @@ class _DistillationScreenState extends State<DistillationScreen> {
     );
   }
 
+  Widget _buildTemplateCard(
+    BuildContext context,
+    DistillationTemplate template,
+  ) {
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.only(right: AppSpacing.small),
+      child: Card(
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppRadius.medium),
+          onTap: () {
+            _showCreateDialog(context, context.read<DistillationService>(),
+                preselectedTemplate: template);
+          },
+          child: Container(
+            width: 200,
+            padding: const EdgeInsets.all(AppSpacing.medium),
+            child: Row(
+              children: [
+                // 左侧图标
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(AppRadius.medium),
+                  ),
+                  child: Icon(
+                    _getTypeIcon(template.type),
+                    color: theme.colorScheme.primary,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.medium),
+                // 右侧标题+描述
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        template.name,
+                        style: theme.textTheme.titleSmall,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (template.description.isNotEmpty) ...[
+                        const SizedBox(height: AppSpacing.xSmall),
+                        Text(
+                          template.description,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  IconData _getTypeIcon(DistillationType type) {
+    switch (type) {
+      case DistillationType.summary:
+        return Icons.summarize;
+      case DistillationType.outline:
+        return Icons.list_alt;
+      case DistillationType.character:
+        return Icons.person_search;
+      case DistillationType.theme:
+        return Icons.palette;
+      case DistillationType.structure:
+        return Icons.account_tree;
+      case DistillationType.custom:
+        return Icons.tune;
+    }
+  }
+
   void _showCreateDialog(
     BuildContext context,
-    DistillationService distillationService,
-  ) {
+    DistillationService distillationService, {
+    DistillationTemplate? preselectedTemplate,
+  }) {
     final nameController = TextEditingController();
     final descController = TextEditingController();
     final promptController = TextEditingController();
-    var selectedType = DistillationType.summary;
-    DistillationTemplate? selectedTemplate;
+    var selectedType = preselectedTemplate?.type ?? DistillationType.summary;
+    DistillationTemplate? selectedTemplate = preselectedTemplate;
     final selectedChapters = <String>[];
+
+    // 如果有预选模板，设置提示词
+    if (preselectedTemplate != null) {
+      promptController.text = preselectedTemplate.promptTemplate;
+    }
 
     showDialog(
       context: context,

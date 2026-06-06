@@ -125,6 +125,8 @@ class _AIChatScreenState extends State<AIChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('AI 助手'),
@@ -134,16 +136,25 @@ class _AIChatScreenState extends State<AIChatScreen> {
             onPressed: _newSession,
             tooltip: '新对话',
           ),
-          AIModelSelector(
-            currentModel: _selectedModel,
-            onModelChanged: (model) {
-              setState(() => _selectedModel = model);
-            },
-          ),
         ],
       ),
       body: Column(
         children: [
+          // 顶部模型选择器
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.medium,
+              vertical: AppSpacing.small,
+            ),
+            color: theme.colorScheme.surfaceContainerLow,
+            child: AIModelSelector(
+              currentModel: _selectedModel,
+              onModelChanged: (model) {
+                setState(() => _selectedModel = model);
+              },
+            ),
+          ),
           // 消息列表
           Expanded(
             child: _isLoadingSession
@@ -156,38 +167,45 @@ class _AIChatScreenState extends State<AIChatScreen> {
                             Icon(
                               Icons.auto_awesome,
                               size: 64,
-                              color: Theme.of(context).disabledColor,
+                              color: theme.colorScheme.primary.withOpacity(0.4),
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: AppSpacing.medium),
                             Text(
-                              '开始与AI对话',
-                              style: Theme.of(context).textTheme.titleMedium,
+                              '开始对话',
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                color: theme.colorScheme.onSurface,
+                              ),
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: AppSpacing.small),
                             Text(
                               '可以询问写作建议、角色设定、情节构思等',
-                              style: Theme.of(context).textTheme.bodySmall,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
                             ),
                           ],
                         ),
                       )
-                    : ListView.builder(
-                        controller: _scrollController,
-                        padding: const EdgeInsets.all(12),
-                        itemCount: _messages.length,
-                        itemBuilder: (context, index) {
-                          final message = _messages[index];
-                          return Column(
-                            children: [
-                              ChatBubble(message: message),
-                              // 显示工具调用卡片
-                              if (message.toolCalls != null)
-                                ...message.toolCalls!.map(
-                                  (tc) => ToolCallCard(toolCall: tc),
-                                ),
-                            ],
-                          );
-                        },
+                    : Listener(
+                        onPointerMove: (_) {},
+                        child: ListView.builder(
+                          controller: _scrollController,
+                          padding: const EdgeInsets.all(AppSpacing.medium),
+                          itemCount: _messages.length,
+                          itemBuilder: (context, index) {
+                            final message = _messages[index];
+                            return Column(
+                              children: [
+                                ChatBubble(message: message),
+                                // 显示工具调用卡片
+                                if (message.toolCalls != null)
+                                  ...message.toolCalls!.map(
+                                    (tc) => ToolCallCard(toolCall: tc),
+                                  ),
+                              ],
+                            );
+                          },
+                        ),
                       ),
           ),
           // 输入区域
@@ -199,43 +217,64 @@ class _AIChatScreenState extends State<AIChatScreen> {
 
   Widget _buildInputArea() {
     final aiEngine = context.watch<AIEngine>();
+    final theme = Theme.of(context);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.all(AppSpacing.medium),
       decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
         border: Border(
-          top: BorderSide(color: Theme.of(context).dividerColor),
+          top: BorderSide(color: theme.colorScheme.outlineVariant),
         ),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
+          IconButton(
+            icon: const Icon(Icons.add_circle_outline),
+            onPressed: _newSession,
+            tooltip: '新对话',
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(width: AppSpacing.small),
           Expanded(
             child: TextField(
               controller: _messageController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 hintText: '输入消息...',
-                border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 10,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.xLarge),
                 ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.medium,
+                  vertical: AppSpacing.small + 2,
+                ),
+                filled: true,
+                fillColor: theme.colorScheme.surfaceContainerHighest,
               ),
-              maxLines: 3,
+              maxLines: 4,
               minLines: 1,
               textInputAction: TextInputAction.send,
               onSubmitted: (_) => _sendMessage(),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.small),
           aiEngine.isGenerating
               ? IconButton(
                   icon: const Icon(Icons.stop),
                   onPressed: () => aiEngine.stopGenerating(),
-                  color: Theme.of(context).colorScheme.error,
+                  color: theme.colorScheme.error,
+                  style: IconButton.styleFrom(
+                    backgroundColor: theme.colorScheme.errorContainer,
+                  ),
                 )
-              : IconButton(
-                  icon: const Icon(Icons.send),
+              : FilledButton(
                   onPressed: _sendMessage,
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.all(AppSpacing.small + 4),
+                    shape: const CircleBorder(),
+                  ),
+                  child: const Icon(Icons.send_rounded),
                 ),
         ],
       ),

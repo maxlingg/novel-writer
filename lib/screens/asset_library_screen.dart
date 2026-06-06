@@ -65,10 +65,12 @@ class _AssetLibraryScreenState extends State<AssetLibraryScreen> {
             padding: const EdgeInsets.all(AppSpacing.medium),
             child: TextField(
               controller: _searchController,
-              decoration: const InputDecoration(
-                labelText: '搜索素材',
-                prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                hintText: '搜索素材...',
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.medium),
+                ),
               ),
               onChanged: (value) => setState(() => _searchQuery = value),
             ),
@@ -76,19 +78,22 @@ class _AssetLibraryScreenState extends State<AssetLibraryScreen> {
 
           // 类型筛选
           SizedBox(
-            height: 48,
-            child: ListView(
+            height: 40,
+            child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.medium),
-              children: [
-                _buildTypeChip(AssetType.character, '人物', Icons.person),
-                _buildTypeChip(AssetType.scene, '场景', Icons.location_on),
-                _buildTypeChip(AssetType.item, '物品', Icons.inventory_2),
-                _buildTypeChip(AssetType.concept, '概念', Icons.lightbulb),
-                _buildTypeChip(AssetType.world, '世界观', Icons.public),
-                _buildTypeChip(AssetType.timeline, '时间线', Icons.timeline),
-                _buildTypeChip(AssetType.relation, '关系', Icons.group),
-              ],
+              child: Wrap(
+                spacing: AppSpacing.small,
+                children: [
+                  _buildTypeChip(AssetType.character, '人物'),
+                  _buildTypeChip(AssetType.scene, '场景'),
+                  _buildTypeChip(AssetType.item, '物品'),
+                  _buildTypeChip(AssetType.concept, '概念'),
+                  _buildTypeChip(AssetType.world, '世界观'),
+                  _buildTypeChip(AssetType.timeline, '时间线'),
+                  _buildTypeChip(AssetType.relation, '关系'),
+                ],
+              ),
             ),
           ),
 
@@ -102,18 +107,25 @@ class _AssetLibraryScreenState extends State<AssetLibraryScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
-                          Icons.inbox_outlined,
-                          size: 64,
-                          color: theme.colorScheme.outline,
+                          Icons.inventory_2_outlined,
+                          size: 72,
+                          color: theme.colorScheme.outline.withOpacity(0.5),
                         ),
                         const SizedBox(height: AppSpacing.medium),
                         Text(
-                          _searchQuery.isNotEmpty ? '没有找到匹配的素材' : '暂无素材',
+                          _searchQuery.isNotEmpty ? '没有找到匹配的素材' : '素材库空空如也',
                           style: theme.textTheme.titleMedium?.copyWith(
                             color: theme.colorScheme.outline,
                           ),
                         ),
                         const SizedBox(height: AppSpacing.small),
+                        Text(
+                          _searchQuery.isNotEmpty ? '试试其他搜索词' : '创建你的第一个素材吧',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.outline.withOpacity(0.7),
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.large),
                         ElevatedButton.icon(
                           onPressed: () => _showCreateAssetDialog(context, assetService),
                           icon: const Icon(Icons.add),
@@ -122,8 +134,14 @@ class _AssetLibraryScreenState extends State<AssetLibraryScreen> {
                       ],
                     ),
                   )
-                : ListView.builder(
+                : GridView.builder(
                     padding: const EdgeInsets.all(AppSpacing.medium),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: AppSpacing.medium,
+                      crossAxisSpacing: AppSpacing.medium,
+                      childAspectRatio: 0.85,
+                    ),
                     itemCount: filteredAssets.length,
                     itemBuilder: (context, index) => _buildAssetCard(
                       context,
@@ -137,18 +155,14 @@ class _AssetLibraryScreenState extends State<AssetLibraryScreen> {
     );
   }
 
-  Widget _buildTypeChip(AssetType type, String label, IconData icon) {
+  Widget _buildTypeChip(AssetType type, String label) {
     final isSelected = _selectedType == type;
-    final theme = Theme.of(context);
 
-    return Padding(
-      padding: const EdgeInsets.only(right: AppSpacing.small),
-      child: FilterChip(
-        selected: isSelected,
-        onSelected: (_) => setState(() => _selectedType = type),
-        avatar: Icon(icon, size: 18),
-        label: Text(label),
-      ),
+    return FilterChip(
+      selected: isSelected,
+      onSelected: (_) => setState(() => _selectedType = type),
+      label: Text(label),
+      visualDensity: VisualDensity.compact,
     );
   }
 
@@ -160,81 +174,130 @@ class _AssetLibraryScreenState extends State<AssetLibraryScreen> {
     final theme = Theme.of(context);
 
     return Card(
-      margin: const EdgeInsets.only(bottom: AppSpacing.medium),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () => _showAssetDetail(context, asset, assetService),
-        borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.medium),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // 图标
+              // 操作菜单（右上角）
+              Align(
+                alignment: Alignment.topRight,
+                child: SizedBox(
+                  width: 32,
+                  height: 32,
+                  child: PopupMenuButton(
+                    padding: EdgeInsets.zero,
+                    iconSize: 20,
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        value: 'edit',
+                        child: ListTile(
+                          leading: Icon(Icons.edit),
+                          title: Text('编辑'),
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: 'delete',
+                        child: ListTile(
+                          leading: Icon(Icons.delete_outline),
+                          title: Text('删除'),
+                        ),
+                      ),
+                    ],
+                    onSelected: (value) {
+                      switch (value) {
+                        case 'edit':
+                          _showEditAssetDialog(context, asset, assetService);
+                          break;
+                        case 'delete':
+                          _confirmDelete(context, asset, assetService);
+                          break;
+                      }
+                    },
+                  ),
+                ),
+              ),
+
+              // 类型图标
               Container(
-                width: 48,
-                height: 48,
+                width: 56,
+                height: 56,
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(12),
+                  color: theme.colorScheme.primaryContainer.withOpacity(0.4),
+                  borderRadius: BorderRadius.circular(AppRadius.large),
                 ),
                 child: Icon(
                   _getTypeIcon(asset.type),
+                  size: 32,
                   color: theme.colorScheme.primary,
                 ),
               ),
 
-              const SizedBox(width: AppSpacing.medium),
+              const SizedBox(height: AppSpacing.small),
 
-              // 信息
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      asset.name,
-                      style: theme.textTheme.titleMedium,
-                    ),
-                    if (asset.description.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: AppSpacing.xSmall),
-                        child: Text(
-                          asset.description,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    if (asset.tags != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: AppSpacing.small),
-                        child: Wrap(
-                          spacing: 6,
-                          children: asset.tags!
-                              .split(',')
-                              .map((tag) => Chip(
-                                    label: Text(
-                                      tag.trim(),
-                                      style: const TextStyle(fontSize: 10),
-                                    ),
-                                    visualDensity: VisualDensity.compact,
-                                  ))
-                              .toList(),
-                        ),
-                      ),
-                  ],
-                ),
+              // 素材名称
+              Text(
+                asset.name,
+                style: theme.textTheme.titleSmall,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
               ),
 
+              // 标签
+              if (asset.tags != null && asset.tags!.isNotEmpty) ...[
+                const SizedBox(height: AppSpacing.small),
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Wrap(
+                      spacing: 4,
+                      runSpacing: 4,
+                      alignment: WrapAlignment.center,
+                      children: asset.tags!
+                          .split(',')
+                          .take(4)
+                          .map(
+                            (tag) => Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.secondaryContainer
+                                    .withOpacity(0.3),
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.small),
+                              ),
+                              child: Text(
+                                tag.trim(),
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  fontSize: 10,
+                                  color: theme.colorScheme.onSecondaryContainer,
+                                ),
+                              ),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ),
+                ),
+              ],
+
+              const Spacer(),
+
               // 使用次数
-              Column(
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
                     Icons.visibility_outlined,
+                    size: 14,
                     color: theme.colorScheme.outline,
-                    size: 18,
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(width: 4),
                   Text(
                     '${asset.usageCount}',
                     style: theme.textTheme.labelSmall?.copyWith(
@@ -242,38 +305,6 @@ class _AssetLibraryScreenState extends State<AssetLibraryScreen> {
                     ),
                   ),
                 ],
-              ),
-
-              const SizedBox(width: AppSpacing.small),
-
-              // 操作菜单
-              PopupMenuButton(
-                itemBuilder: (context) => [
-                  const PopupMenuItem(
-                    value: 'edit',
-                    child: ListTile(
-                      leading: Icon(Icons.edit),
-                      title: Text('编辑'),
-                    ),
-                  ),
-                  const PopupMenuItem(
-                    value: 'delete',
-                    child: ListTile(
-                      leading: Icon(Icons.delete_outline),
-                      title: Text('删除'),
-                    ),
-                  ),
-                ],
-                onSelected: (value) {
-                  switch (value) {
-                    case 'edit':
-                      _showEditAssetDialog(context, asset, assetService);
-                      break;
-                    case 'delete':
-                      _confirmDelete(context, asset, assetService);
-                      break;
-                  }
-                },
               ),
             ],
           ),

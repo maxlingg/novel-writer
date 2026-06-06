@@ -25,17 +25,11 @@ class NovelWriterApp extends StatelessWidget {
     return MaterialApp(
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
-
-      // 主题配置
       theme: _buildLightTheme(settings),
       darkTheme: _buildDarkTheme(settings),
       themeMode: settings.themeMode,
-
-      // 路由配置
       initialRoute: AppRoutes.home,
       onGenerateRoute: _generateRoute,
-
-      // 本地化
       locale: const Locale('zh', 'CN'),
       supportedLocales: const [
         Locale('zh', 'CN'),
@@ -44,117 +38,365 @@ class NovelWriterApp extends StatelessWidget {
     );
   }
 
-  /// 浅色主题
   ThemeData _buildLightTheme(SettingsService settings) {
+    final colorScheme = ColorScheme.fromSeed(
+      seedColor: settings.accentColor,
+      brightness: Brightness.light,
+    );
+
     return ThemeData(
       brightness: Brightness.light,
       useMaterial3: true,
-      colorSchemeSeed: settings.accentColor,
+      colorScheme: colorScheme,
       fontFamily: settings.fontFamily,
-      appBarTheme: const AppBarTheme(
-        centerTitle: true,
+      scaffoldBackgroundColor: colorScheme.surface,
+
+      // AppBar
+      appBarTheme: AppBarTheme(
+        centerTitle: false,
         elevation: 0,
+        scrolledUnderElevation: 1,
+        backgroundColor: colorScheme.surface,
+        foregroundColor: colorScheme.onSurface,
+        titleTextStyle: TextStyle(
+          color: colorScheme.onSurface,
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.3,
+        ),
         systemOverlayStyle: SystemUiOverlayStyle.dark,
       ),
-      cardTheme: CardTheme(
-        elevation: 2,
+
+      // Card
+      cardTheme: CardThemeData(
+        elevation: 1,
+        shadowColor: Colors.black.withAlpha(20),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.large),
+        ),
+        clipBehavior: Clip.antiAlias,
+        margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+      ),
+
+      // FAB
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        elevation: 4,
+        backgroundColor: colorScheme.primary,
+        foregroundColor: colorScheme.onPrimary,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.large),
+        ),
+        extendedSizeConstraints: const BoxConstraints(
+          minHeight: 56,
+          minWidth: 56,
         ),
       ),
-      floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        elevation: 4,
+
+      // ElevatedButton
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.medium),
+          ),
+          textStyle: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+
+      // FilledButton
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.medium),
+          ),
+          textStyle: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+
+      // Input
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: colorScheme.surfaceContainerHighest.withAlpha(80),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.medium),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.medium),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.medium),
+          borderSide: BorderSide(color: colorScheme.primary, width: 1.5),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
+      ),
+
+      // Chip
+      chipTheme: ChipThemeData(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.small),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+        labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+      ),
+
+      // Dialog
+      dialogTheme: DialogThemeData(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.xLarge),
+        ),
+        elevation: 8,
+      ),
+
+      // Divider
+      dividerTheme: DividerThemeData(
+        color: colorScheme.outlineVariant.withAlpha(80),
+        thickness: 0.5,
+        space: 0,
+      ),
+
+      // Snackbar
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.medium),
+        ),
+      ),
+
+      // Page Transitions
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+        },
       ),
     );
   }
 
-  /// 深色主题
   ThemeData _buildDarkTheme(SettingsService settings) {
+    final colorScheme = ColorScheme.fromSeed(
+      seedColor: settings.accentColor,
+      brightness: Brightness.dark,
+    );
+
     return ThemeData(
       brightness: Brightness.dark,
       useMaterial3: true,
-      colorSchemeSeed: settings.accentColor,
+      colorScheme: colorScheme,
       fontFamily: settings.fontFamily,
-      appBarTheme: const AppBarTheme(
-        centerTitle: true,
+      scaffoldBackgroundColor: colorScheme.surface,
+
+      // AppBar
+      appBarTheme: AppBarTheme(
+        centerTitle: false,
         elevation: 0,
+        scrolledUnderElevation: 1,
+        backgroundColor: colorScheme.surface,
+        foregroundColor: colorScheme.onSurface,
+        titleTextStyle: TextStyle(
+          color: colorScheme.onSurface,
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.3,
+        ),
         systemOverlayStyle: SystemUiOverlayStyle.light,
       ),
-      cardTheme: CardTheme(
-        elevation: 2,
+
+      // Card
+      cardTheme: CardThemeData(
+        elevation: 1,
+        shadowColor: Colors.black.withAlpha(40),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.large),
+        ),
+        clipBehavior: Clip.antiAlias,
+        margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+      ),
+
+      // FAB
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        elevation: 4,
+        backgroundColor: colorScheme.primary,
+        foregroundColor: colorScheme.onPrimary,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.large),
+        ),
+        extendedSizeConstraints: const BoxConstraints(
+          minHeight: 56,
+          minWidth: 56,
         ),
       ),
-      floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        elevation: 4,
+
+      // ElevatedButton
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.medium),
+          ),
+          textStyle: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+
+      // FilledButton
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.medium),
+          ),
+          textStyle: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+
+      // Input
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: colorScheme.surfaceContainerHighest.withAlpha(60),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.medium),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.medium),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.medium),
+          borderSide: BorderSide(color: colorScheme.primary, width: 1.5),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
+      ),
+
+      // Chip
+      chipTheme: ChipThemeData(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.small),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+        labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+      ),
+
+      // Dialog
+      dialogTheme: DialogThemeData(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.xLarge),
+        ),
+        elevation: 8,
+      ),
+
+      // Divider
+      dividerTheme: DividerThemeData(
+        color: colorScheme.outlineVariant.withAlpha(60),
+        thickness: 0.5,
+        space: 0,
+      ),
+
+      // Snackbar
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.medium),
+        ),
+      ),
+
+      // Page Transitions
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+        },
       ),
     );
   }
 
-  /// 路由生成
   Route<dynamic> _generateRoute(RouteSettings settings) {
+    Widget page;
     switch (settings.name) {
       case AppRoutes.home:
-        return MaterialPageRoute(
-          builder: (_) => const HomeScreen(),
-        );
+        page = const HomeScreen();
+        break;
       case AppRoutes.project:
-        final projectId = settings.arguments as String?;
-        return MaterialPageRoute(
-          builder: (_) => ProjectScreen(projectId: projectId),
-        );
+        page = ProjectScreen(projectId: settings.arguments as String?);
+        break;
       case AppRoutes.editor:
         final args = settings.arguments as Map<String, dynamic>?;
-        return MaterialPageRoute(
-          builder: (_) => EditorScreen(
-            projectId: args?['projectId'] ?? '',
-            chapterId: args?['chapterId'] ?? '',
-          ),
+        page = EditorScreen(
+          projectId: args?['projectId'] ?? '',
+          chapterId: args?['chapterId'] ?? '',
         );
+        break;
       case AppRoutes.aiChat:
-        final projectId = settings.arguments as String?;
-        return MaterialPageRoute(
-          builder: (_) => AIChatScreen(projectId: projectId),
-        );
+        page = AIChatScreen(projectId: settings.arguments as String?);
+        break;
       case AppRoutes.settings:
-        return MaterialPageRoute(
-          builder: (_) => const SettingsScreen(),
-        );
+        page = const SettingsScreen();
+        break;
       case AppRoutes.webdav:
-        return MaterialPageRoute(
-          builder: (_) => const WebDAVScreen(),
-        );
+        page = const WebDAVScreen();
+        break;
       case AppRoutes.skillMarketplace:
-        return MaterialPageRoute(
-          builder: (_) => const SkillMarketplaceScreen(),
-        );
+        page = const SkillMarketplaceScreen();
+        break;
       case AppRoutes.memo:
-        final projectId = settings.arguments as String?;
-        return MaterialPageRoute(
-          builder: (_) => MemoScreen(projectId: projectId),
-        );
+        page = MemoScreen(projectId: settings.arguments as String?);
+        break;
       case AppRoutes.search:
-        final projectId = settings.arguments as String?;
-        return MaterialPageRoute(
-          builder: (_) => SearchScreen(projectId: projectId),
-        );
+        page = SearchScreen(projectId: settings.arguments as String?);
+        break;
       case AppRoutes.assetLibrary:
-        final projectId = settings.arguments as String?;
-        return MaterialPageRoute(
-          builder: (_) => AssetLibraryScreen(projectId: projectId),
-        );
+        page = AssetLibraryScreen(projectId: settings.arguments as String?);
+        break;
       case AppRoutes.distillation:
-        final projectId = settings.arguments as String?;
-        return MaterialPageRoute(
-          builder: (_) => DistillationScreen(projectId: projectId),
-        );
+        page = DistillationScreen(projectId: settings.arguments as String?);
+        break;
       default:
-        return MaterialPageRoute(
-          builder: (_) => const Scaffold(
-            body: Center(child: Text('页面未找到')),
+        page = const Scaffold(body: Center(child: Text('页面未找到')));
+    }
+    return _buildPageRoute(page, settings);
+  }
+
+  Route _buildPageRoute(Widget page, RouteSettings settings) {
+    return PageRouteBuilder(
+      settings: settings,
+      pageBuilder: (context, animation, secondaryAnimation) => page,
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0.02, 0),
+            end: Offset.zero,
+          ).animate(CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutCubic,
+          )),
+          child: FadeTransition(
+            opacity: CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeOut,
+            ),
+            child: child,
           ),
         );
-    }
+      },
+      transitionDuration: AppConstants.normalAnimation,
+    );
   }
 }

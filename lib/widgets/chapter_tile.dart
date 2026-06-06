@@ -17,36 +17,78 @@ class ChapterTile extends StatelessWidget {
     this.index,
   });
 
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final diff = now.difference(date);
+    if (diff.inMinutes < 1) return '刚刚';
+    if (diff.inHours < 1) return '${diff.inMinutes}分钟前';
+    if (diff.inDays < 1) return '${diff.inHours}小时前';
+    if (diff.inDays < 7) return '${diff.inDays}天前';
+    return '${date.month}/${date.day}';
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return ListTile(
-      leading: CircleAvatar(
-        child: Text(
-          '${chapter.sortOrder + 1}',
-          style: const TextStyle(fontSize: 12),
-        ),
-      ),
-      title: Text(
-        chapter.title,
-        style: theme.textTheme.bodyLarge,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-      subtitle: Row(
-        children: [
-          Text(
-            '${chapter.wordCount} 字',
-            style: theme.textTheme.bodySmall,
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        leading: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: theme.colorScheme.primaryContainer,
+            borderRadius: BorderRadius.circular(AppRadius.small),
           ),
-          const SizedBox(width: 8),
-          _StatusIndicator(status: chapter.status),
-        ],
+          child: Center(
+            child: Text(
+              '${chapter.sortOrder + 1}',
+              style: TextStyle(
+                color: theme.colorScheme.onPrimaryContainer,
+                fontWeight: FontWeight.w700,
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ),
+        title: Text(
+          chapter.title,
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        subtitle: Row(
+          children: [
+            Text(
+              '${chapter.wordCount} 字',
+              style: theme.textTheme.bodySmall,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              '·',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.outline,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Text(
+              _formatDate(chapter.updatedAt),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.outline,
+              ),
+            ),
+            const SizedBox(width: 8),
+            _StatusIndicator(status: chapter.status),
+          ],
+        ),
+        trailing: Icon(Icons.chevron_right, color: theme.colorScheme.outline),
+        onTap: onTap,
+        onLongPress: onLongPress,
       ),
-      trailing: const Icon(Icons.chevron_right),
-      onTap: onTap,
-      onLongPress: onLongPress,
     );
   }
 }

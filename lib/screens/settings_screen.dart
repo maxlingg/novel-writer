@@ -16,119 +16,150 @@ class SettingsScreen extends StatelessWidget {
       body: Consumer<SettingsService>(
         builder: (context, settings, child) {
           return ListView(
+            padding: const EdgeInsets.all(AppSpacing.medium),
             children: [
               // 外观设置
-              _SectionHeader(title: '外观'),
-              ListTile(
-                leading: const Icon(Icons.dark_mode),
-                title: const Text('主题模式'),
-                subtitle: Text(_themeModeLabel(settings.themeModeOption)),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => _showThemeModeDialog(context, settings),
-              ),
-              ListTile(
-                leading: const Icon(Icons.color_lens),
-                title: const Text('主题色'),
-                trailing: Container(
-                  width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    color: settings.accentColor,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                onTap: () => _showColorPicker(context, settings),
-              ),
-              ListTile(
-                leading: const Icon(Icons.text_fields),
-                title: const Text('字体'),
-                subtitle: Text(settings.fontFamily.isEmpty
-                    ? '默认'
-                    : settings.fontFamily),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => _showFontPicker(context, settings),
-              ),
-
-              const Divider(),
-
-              // 编辑器设置
-              _SectionHeader(title: '编辑器'),
-              SwitchListTile(
-                secondary: const Icon(Icons.save),
-                title: const Text('自动保存'),
-                subtitle: Text('每 ${settings.autoSaveInterval} 秒自动保存'),
-                value: settings.autoSave,
-                onChanged: (value) => settings.setAutoSave(value),
-              ),
-              ListTile(
-                leading: const Icon(Icons.format_size),
-                title: const Text('编辑器字号'),
-                subtitle: Text('${settings.editorFontSize.toInt()}'),
-                trailing: Row(
+              _buildSectionHeader('外观', context),
+              Card(
+                child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    IconButton(
-                      icon: const Icon(Icons.remove),
-                      onPressed: () => settings.setEditorFontSize(
-                        (settings.editorFontSize - 1).clamp(12.0, 32.0),
-                      ),
+                    ListTile(
+                      leading: const Icon(Icons.dark_mode),
+                      title: const Text('主题模式'),
+                      subtitle: Text(_themeModeLabel(settings.themeModeOption)),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => _showThemeModeDialog(context, settings),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.add),
-                      onPressed: () => settings.setEditorFontSize(
-                        (settings.editorFontSize + 1).clamp(12.0, 32.0),
+                    ListTile(
+                      leading: const Icon(Icons.color_lens),
+                      title: const Text('主题色'),
+                      trailing: Container(
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          color: settings.accentColor,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      onTap: () => _showColorPicker(context, settings),
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.text_fields),
+                      title: const Text('字体'),
+                      subtitle: Text(settings.fontFamily.isEmpty
+                          ? '默认'
+                          : settings.fontFamily),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => _showFontPicker(context, settings),
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.format_size),
+                      title: const Text('字号'),
+                      subtitle: Text('${settings.editorFontSize.toInt()}'),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.remove),
+                            onPressed: () => settings.setEditorFontSize(
+                              (settings.editorFontSize - 1).clamp(12.0, 32.0),
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.add),
+                            onPressed: () => settings.setEditorFontSize(
+                              (settings.editorFontSize + 1).clamp(12.0, 32.0),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
-              SwitchListTile(
-                secondary: const Icon(Icons.show_chart),
-                title: const Text('显示字数统计'),
-                value: settings.showWordCount,
-                onChanged: (value) => settings.setShowWordCount(value),
-              ),
+              const SizedBox(height: AppSpacing.large),
 
-              const Divider(),
-
-              // AI设置
-              _SectionHeader(title: 'AI 模型'),
-              ListTile(
-                leading: const Icon(Icons.smart_toy),
-                title: const Text('AI模型配置'),
-                subtitle: Text(
-                  settings.modelConfigs.isEmpty
-                      ? '未配置'
-                      : '${settings.modelConfigs.length} 个模型',
+              // 编辑器设置
+              _buildSectionHeader('编辑器', context),
+              Card(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SwitchListTile(
+                      secondary: const Icon(Icons.save),
+                      title: const Text('自动保存'),
+                      subtitle: Text('每 ${settings.autoSaveInterval} 秒自动保存'),
+                      value: settings.autoSave,
+                      onChanged: (value) => settings.setAutoSave(value),
+                    ),
+                    SwitchListTile(
+                      secondary: const Icon(Icons.show_chart),
+                      title: const Text('显示字数统计'),
+                      value: settings.showWordCount,
+                      onChanged: (value) => settings.setShowWordCount(value),
+                    ),
+                  ],
                 ),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => _showModelConfigPage(context, settings),
               ),
+              const SizedBox(height: AppSpacing.large),
 
-              const Divider(),
+              // AI模型
+              _buildSectionHeader('AI 模型', context),
+              Card(
+                child: ListTile(
+                  leading: const Icon(Icons.smart_toy),
+                  title: const Text('AI模型配置'),
+                  subtitle: Text(
+                    settings.modelConfigs.isEmpty
+                        ? '未配置'
+                        : '${settings.modelConfigs.length} 个模型',
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => _showModelConfigPage(context, settings),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.large),
 
               // 同步设置
-              _SectionHeader(title: '同步'),
-              ListTile(
-                leading: const Icon(Icons.cloud),
-                title: const Text('WebDAV 同步'),
-                subtitle: Text(
-                  settings.webdavConfig.isConfigured ? '已配置' : '未配置',
+              _buildSectionHeader('同步', context),
+              Card(
+                child: ListTile(
+                  leading: const Icon(Icons.cloud),
+                  title: const Text('WebDAV 同步'),
+                  subtitle: Text(
+                    settings.webdavConfig.isConfigured ? '已配置' : '未配置',
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    Navigator.pushNamed(context, AppRoutes.webdav);
+                  },
                 ),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () {
-                  Navigator.pushNamed(context, AppRoutes.webdav);
-                },
               ),
-
-              const Divider(),
+              const SizedBox(height: AppSpacing.large),
 
               // 关于
-              _SectionHeader(title: '关于'),
-              ListTile(
-                leading: const Icon(Icons.info),
-                title: const Text('版本'),
-                subtitle: Text(AppConstants.appVersion),
+              _buildSectionHeader('关于', context),
+              Card(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ListTile(
+                      leading: const Icon(Icons.info),
+                      title: const Text('版本'),
+                      subtitle: Text(AppConstants.appVersion),
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.code),
+                      title: const Text('GitHub'),
+                      subtitle: const Text('查看源代码'),
+                      trailing: const Icon(Icons.open_in_new),
+                      onTap: () {
+                        // GitHub 链接
+                      },
+                    ),
+                  ],
+                ),
               ),
             ],
           );
@@ -562,14 +593,14 @@ class _ModelConfigScreenState extends State<_ModelConfigScreen> {
   }
 }
 
-class _SectionHeader extends StatelessWidget {
-  final String title;
-  const _SectionHeader({required this.title});
-
-  @override
-  Widget build(BuildContext context) {
+Widget _buildSectionHeader(String title, BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.small,
+        AppSpacing.xSmall,
+        AppSpacing.small,
+        AppSpacing.small,
+      ),
       child: Text(
         title,
         style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -578,4 +609,3 @@ class _SectionHeader extends StatelessWidget {
       ),
     );
   }
-}

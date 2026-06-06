@@ -67,9 +67,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(AppConstants.appName),
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(gradient: AppGradients.primary),
+        ),
+        foregroundColor: Colors.white,
         actions: [
           IconButton(
             icon: const Icon(Icons.inventory_2),
@@ -105,61 +111,81 @@ class _HomeScreenState extends State<HomeScreen> {
         builder: (context, projectService, child) {
           final projects = projectService.projects;
 
-          if (projects.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.menu_book,
-                    size: 80,
-                    color: Theme.of(context).disabledColor,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    '还没有项目',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '点击右下角按钮创建你的第一个小说项目',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).disabledColor,
+          return AnimatedSwitcher(
+            duration: AppConstants.normalAnimation,
+            child: projects.isEmpty
+                ? Center(
+                    key: const ValueKey('empty'),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(28),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primaryContainer
+                                .withOpacity(0.3),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.menu_book_rounded,
+                            size: 80,
+                            color: theme.colorScheme.primary,
+                          ),
                         ),
+                        const SizedBox(height: 24),
+                        Text(
+                          '还没有项目',
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '点击下方按钮创建你的第一个小说项目',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : RefreshIndicator(
+                    key: const ValueKey('list'),
+                    onRefresh: _loadProjects,
+                    child: ListView.separated(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      itemCount: projects.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      itemBuilder: (context, index) {
+                        return ProjectCard(
+                          project: projects[index],
+                          onTap: () {
+                            Navigator.pushNamed(
+                              context,
+                              AppRoutes.project,
+                              arguments: projects[index].id,
+                            );
+                          },
+                          onLongPress: () {
+                            _deleteProject(
+                              projects[index].id,
+                              projects[index].name,
+                            );
+                          },
+                        );
+                      },
+                    ),
                   ),
-                ],
-              ),
-            );
-          }
-
-          return RefreshIndicator(
-            onRefresh: _loadProjects,
-            child: ListView.builder(
-              padding: const EdgeInsets.all(AppConstants.defaultPadding),
-              itemCount: projects.length,
-              itemBuilder: (context, index) {
-                return ProjectCard(
-                  project: projects[index],
-                  onTap: () {
-                    Navigator.pushNamed(
-                      context,
-                      AppRoutes.project,
-                      arguments: projects[index].id,
-                    );
-                  },
-                  onLongPress: () {
-                    _deleteProject(projects[index].id, projects[index].name);
-                  },
-                );
-              },
-            ),
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: ExtendedFloatingActionButton(
         onPressed: _createProject,
-        tooltip: '创建项目',
-        child: const Icon(Icons.add),
+        icon: const Icon(Icons.add),
+        label: const Text('创建项目'),
       ),
     );
   }

@@ -140,7 +140,10 @@ class _ProjectScreenState extends State<ProjectScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_project?.name ?? '项目详情'),
+        title: Text(
+          _project?.name ?? '项目详情',
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.edit),
@@ -220,12 +223,44 @@ class _ProjectScreenState extends State<ProjectScreen> {
     if (_project == null) {
       return const Center(child: Text('项目不存在'));
     }
+    final theme = Theme.of(context);
 
     return Column(
       children: [
         // 项目信息卡片
         _buildProjectInfo(),
-        const Divider(height: 1),
+        // 章节列表标题栏
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 12,
+          ),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: theme.colorScheme.outlineVariant,
+                width: 1,
+              ),
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '目录 (${_chapters.length}章)',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              IconButton.filledTonal(
+                onPressed: () => _addChapter(),
+                icon: const Icon(Icons.add, size: 20),
+                tooltip: '添加章节',
+                visualDensity: VisualDensity.compact,
+              ),
+            ],
+          ),
+        ),
         // 章节列表
         Expanded(
           child: _chapters.isEmpty
@@ -234,26 +269,29 @@ class _ProjectScreenState extends State<ProjectScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
-                        Icons.menu_book,
-                        size: 64,
-                        color: Theme.of(context).disabledColor,
+                        Icons.auto_stories_outlined,
+                        size: 80,
+                        color: theme.colorScheme.outlineVariant,
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: AppSpacing.medium),
                       Text(
                         '还没有章节',
-                        style: Theme.of(context).textTheme.titleMedium,
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: AppSpacing.small),
                       Text(
-                        '点击右下角按钮添加章节',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context).disabledColor,
-                            ),
+                        '点击下方按钮开始创作吧',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.outline,
+                        ),
                       ),
                     ],
                   ),
                 )
               : ListView.builder(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
                   itemCount: _chapters.length,
                   itemBuilder: (context, index) {
                     return ChapterTile(
@@ -269,41 +307,60 @@ class _ProjectScreenState extends State<ProjectScreen> {
   }
 
   Widget _buildProjectInfo() {
-    return Padding(
+    final theme = Theme.of(context);
+    return Container(
+      width: double.infinity,
+      color: theme.colorScheme.surfaceContainerLow,
       padding: const EdgeInsets.all(AppConstants.defaultPadding),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             _project!.name,
-            style: Theme.of(context).textTheme.titleLarge,
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           if (_project!.description.isNotEmpty) ...[
             const SizedBox(height: 4),
             Text(
               _project!.description,
-              style: Theme.of(context).textTheme.bodyMedium,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
           ],
-          const SizedBox(height: 8),
-          Row(
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
             children: [
-              Chip(
+              ActionChip(
+                avatar: Icon(Icons.edit, size: 16, color: theme.colorScheme.onSurfaceVariant),
                 label: Text('${_project!.currentWordCount} 字'),
-                avatar: const Icon(Icons.edit, size: 16),
+                onPressed: () {},
+                visualDensity: VisualDensity.compact,
+                side: BorderSide(color: theme.colorScheme.outlineVariant),
+                backgroundColor: theme.colorScheme.surface,
               ),
-              const SizedBox(width: 8),
-              Chip(
+              ActionChip(
+                avatar: Icon(Icons.menu_book, size: 16, color: theme.colorScheme.onSurfaceVariant),
                 label: Text('${_chapters.length} 章'),
-                avatar: const Icon(Icons.menu_book, size: 16),
+                onPressed: () {},
+                visualDensity: VisualDensity.compact,
+                side: BorderSide(color: theme.colorScheme.outlineVariant),
+                backgroundColor: theme.colorScheme.surface,
               ),
-              if (_volumes.isNotEmpty) ...[
-                const SizedBox(width: 8),
-                Chip(
+              if (_volumes.isNotEmpty)
+                ActionChip(
+                  avatar: Icon(Icons.folder, size: 16, color: theme.colorScheme.onSurfaceVariant),
                   label: Text('${_volumes.length} 卷'),
-                  avatar: const Icon(Icons.folder, size: 16),
+                  onPressed: () {},
+                  visualDensity: VisualDensity.compact,
+                  side: BorderSide(color: theme.colorScheme.outlineVariant),
+                  backgroundColor: theme.colorScheme.surface,
                 ),
-              ],
             ],
           ),
         ],

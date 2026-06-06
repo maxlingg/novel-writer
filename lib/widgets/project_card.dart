@@ -19,66 +19,94 @@ class ProjectCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        onTap: onTap,
-        onLongPress: onLongPress,
-        borderRadius: BorderRadius.circular(AppConstants.cardBorderRadius),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 标题行
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      project.name,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(AppRadius.large),
+        boxShadow: [AppShadows.medium],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          onLongPress: onLongPress,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 左侧渐变竖条
+                Container(
+                  width: 4,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    gradient: AppGradients.primary,
+                    borderRadius: BorderRadius.circular(2),
                   ),
-                  _StatusChip(status: project.status),
-                ],
-              ),
-              // 描述
-              if (project.description.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text(
-                  project.description,
-                  style: theme.textTheme.bodySmall,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(width: 16),
+                // 内容区域
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 标题行
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              project.name,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 18,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          _StatusChip(status: project.status),
+                        ],
+                      ),
+                      // 描述
+                      if (project.description.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          project.description,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                      const SizedBox(height: 12),
+                      // 统计信息
+                      Row(
+                        children: [
+                          _StatItem(
+                            icon: Icons.edit_outlined,
+                            label: '${project.currentWordCount} 字',
+                          ),
+                          const SizedBox(width: 16),
+                          _StatItem(
+                            icon: Icons.schedule_outlined,
+                            label: _formatDate(project.updatedAt),
+                          ),
+                          if (project.genre.isNotEmpty) ...[
+                            const SizedBox(width: 16),
+                            _StatItem(
+                              icon: Icons.category_outlined,
+                              label: project.genre,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ],
-              const SizedBox(height: 12),
-              // 统计信息
-              Row(
-                children: [
-                  _StatItem(
-                    icon: Icons.edit,
-                    label: '${project.currentWordCount} 字',
-                  ),
-                  const SizedBox(width: 16),
-                  _StatItem(
-                    icon: Icons.schedule,
-                    label: _formatDate(project.updatedAt),
-                  ),
-                  if (project.genre.isNotEmpty) ...[
-                    const SizedBox(width: 16),
-                    _StatItem(
-                      icon: Icons.category,
-                      label: project.genre,
-                    ),
-                  ],
-                ],
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -105,22 +133,27 @@ class _StatusChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final (color, label) = switch (status) {
-      ProjectStatus.draft => (Colors.grey, '草稿'),
-      ProjectStatus.writing => (Colors.blue, '写作中'),
-      ProjectStatus.completed => (Colors.green, '已完成'),
-      ProjectStatus.archived => (Colors.orange, '已归档'),
+      ProjectStatus.draft => (theme.colorScheme.outline, '草稿'),
+      ProjectStatus.writing => (theme.colorScheme.primary, '写作中'),
+      ProjectStatus.completed => (const Color(0xFF2E7D32), '已完成'),
+      ProjectStatus.archived => (const Color(0xFFE65100), '已归档'),
     };
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.small),
       ),
       child: Text(
         label,
-        style: TextStyle(color: color, fontSize: 11),
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -142,7 +175,9 @@ class _StatItem extends StatelessWidget {
         const SizedBox(width: 4),
         Text(
           label,
-          style: Theme.of(context).textTheme.bodySmall,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).disabledColor,
+              ),
         ),
       ],
     );
