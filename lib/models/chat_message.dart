@@ -1,4 +1,5 @@
 import '../utils/constants.dart';
+import 'tool_call.dart';
 
 /// 聊天消息模型
 class ChatMessage {

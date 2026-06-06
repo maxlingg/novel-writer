@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../utils/constants.dart';
 import '../models/distillation.dart';
-import '../models/chapter.dart';
 import '../services/distillation_service.dart';
-import '../services/chapter_service.dart';
 import '../services/project_service.dart';
 import '../services/ai_engine.dart';
+import '../services/chapter_service.dart';
 
 /// 蒸馏页面
 class DistillationScreen extends StatefulWidget {
@@ -192,7 +191,7 @@ class _DistillationScreenState extends State<DistillationScreen> {
                         _startDistillation(distillation, distillationService);
                         break;
                       case 'view':
-                        _showResultDialog(context, distillation);
+                        _showResultDialog(context, distillation, distillationService);
                         break;
                       case 'export':
                         _exportResult(distillation, distillationService);
@@ -278,8 +277,8 @@ class _DistillationScreenState extends State<DistillationScreen> {
 
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) {
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) {
           return AlertDialog(
             title: const Text('创建蒸馏任务'),
             content: SizedBox(
@@ -301,13 +300,13 @@ class _DistillationScreenState extends State<DistillationScreen> {
                       onChanged: (value) {
                         setDialogState(() => selectedType = value!);
                         // 查找对应类型的模板
-                        final template = distillationService.templates
-                            .firstWhere(
-                              (t) => t.type == selectedType && t.isBuiltIn,
-                              orElse: () => distillationService.templates.first,
-                            );
-                        promptController.text = template.promptTemplate;
-                        selectedTemplate = template;
+                        final matchingTemplates = distillationService.templates
+                            .where((t) => t.type == selectedType && t.isBuiltIn);
+                        if (matchingTemplates.isNotEmpty) {
+                          final template = matchingTemplates.first;
+                          promptController.text = template.promptTemplate;
+                          selectedTemplate = template;
+                        }
                       },
                     ),
 
@@ -350,13 +349,14 @@ class _DistillationScreenState extends State<DistillationScreen> {
 
                     if (widget.projectId != null) ...[
                       const SizedBox(height: AppSpacing.medium),
-                      Consumer<ChapterService>(
-                        builder: (context, chapterService, _) {
-                          final chapters = chapterService.getChapters(widget.projectId!);
-                          if (chapters.isEmpty) {
+                      FutureBuilder<List<dynamic>>(
+                        future: context.read<ProjectService>().loadChapters(widget.projectId!),
+                        builder: (context, snapshot) {
+                          if (!snapshot.hasData || snapshot.data!.isEmpty) {
                             return const Text('该项目暂无章节');
                           }
 
+                          final chapters = snapshot.data!;
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -401,7 +401,7 @@ class _DistillationScreenState extends State<DistillationScreen> {
             ),
             actions: [
               TextButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () => Navigator.pop(dialogContext),
                 child: const Text('取消'),
               ),
               ElevatedButton(
@@ -418,23 +418,23 @@ class _DistillationScreenState extends State<DistillationScreen> {
                     template: selectedTemplate,
                   );
 
-                  if (mounted) Navigator.pop(context);
+                  if (mounted) Navigator.pop(dialogContext);
 
                   // 询问是否立即开始
                   if (mounted) {
                     showDialog(
                       context: context,
-                      builder: (context) => AlertDialog(
+                      builder: (ctx) => AlertDialog(
                         title: const Text('开始蒸馏？'),
                         content: const Text('任务已创建，是否立即开始蒸馏？'),
                         actions: [
                           TextButton(
-                            onPressed: () => Navigator.pop(context),
+                            onPressed: () => Navigator.pop(ctx),
                             child: const Text('稍后'),
                           ),
                           ElevatedButton(
                             onPressed: () {
-                              Navigator.pop(context);
+                              Navigator.pop(ctx);
                               _startDistillation(distillation, distillationService);
                             },
                             child: const Text('开始'),
@@ -478,6 +478,7 @@ class _DistillationScreenState extends State<DistillationScreen> {
   void _showResultDialog(
     BuildContext context,
     Distillation distillation,
+    DistillationService distillationService,
   ) {
     showDialog(
       context: context,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/tool_call.dart';
+import '../utils/constants.dart';
 
 /// 工具调用卡片组件
 class ToolCallCard extends StatelessWidget {

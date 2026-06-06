@@ -40,13 +40,15 @@ class _SearchScreenState extends State<SearchScreen> {
 
     final searchService = context.read<SearchService>();
 
-    List chapters = [];
-    List memos = [];
+    List<Chapter> chapters = [];
+    List<Memo> memos = [];
 
     if (widget.projectId != null) {
       final projectService = context.read<ProjectService>();
-      chapters = await projectService.loadChapters(widget.projectId!);
-      memos = await context.read<MemoService>().loadMemos(widget.projectId!);
+      final loadedChapters = await projectService.loadChapters(widget.projectId!);
+      chapters = loadedChapters.whereType<Chapter>().toList();
+      final loadedMemos = await context.read<MemoService>().loadMemos(widget.projectId!);
+      memos = loadedMemos.whereType<Memo>().toList();
     }
 
     searchService.search(

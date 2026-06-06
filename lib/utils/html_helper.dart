@@ -7,10 +7,10 @@ class HtmlHelper {
     String text = html;
 
     // 移除脚本和样式
-    text = RegExp(r'<script[^>]*>[\s\S]*?</script>', caseSensitive: false)
-        .replaceAll(text, '');
-    text = RegExp(r'<style[^>]*>[\s\S]*?</style>', caseSensitive: false)
-        .replaceAll(text, '');
+    text = text.replaceAll(
+      RegExp(r'<script[^>]*>[\s\S]*?</script>', caseSensitive: false), '');
+    text = text.replaceAll(
+      RegExp(r'<style[^>]*>[\s\S]*?</style>', caseSensitive: false), '');
 
     // 替换常见HTML标签为换行
     text = text.replaceAll(RegExp(r'<br\s*/?>', caseSensitive: false), '\n');
@@ -20,7 +20,7 @@ class HtmlHelper {
     text = text.replaceAll(RegExp(r'</li>', caseSensitive: false), '\n');
 
     // 移除所有剩余HTML标签
-    text = RegExp(r'<[^>]+>').replaceAll(text, '');
+    text = text.replaceAll(RegExp(r'<[^>]+>'), '');
 
     // 解码HTML实体
     text = _decodeHtmlEntities(text);

@@ -1,3 +1,4 @@
+import 'dart:io';
 import '../tool_registry.dart';
 import '../../utils/file_helper.dart';
 
