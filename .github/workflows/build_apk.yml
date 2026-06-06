@@ -46,11 +46,11 @@ jobs:
 
       - name: Build APK (debug)
         run: |
-          flutter build apk --debug --verbose 2>&1 | tee build_debug.log
+          flutter build apk --debug 2>&1 | tee build_debug.log
 
       - name: Build APK (release)
         run: |
-          flutter build apk --release --verbose 2>&1 | tee build_release.log
+          flutter build apk --release 2>&1 | tee build_release.log
 
       - name: List build output
         if: always()
@@ -65,6 +65,12 @@ jobs:
           find android/ -name "*.apk" 2>/dev/null || echo "No APK in android dir"
           echo "=== Full build tree ==="
           ls -laR build/app/outputs/ 2>/dev/null || echo "No outputs dir"
+          echo "=== Gradle APK output ==="
+          find build/app/outputs/apk/ -type f 2>/dev/null || echo "No gradle apk dir"
+          echo "=== Top-level build ==="
+          ls -la build/ 2>/dev/null || echo "No build dir"
+          echo "=== build/app ==="
+          ls -laR build/app/ 2>/dev/null | head -50 || echo "No build/app dir"
 
       - name: Upload build logs
         if: always()
