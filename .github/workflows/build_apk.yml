@@ -31,125 +31,51 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Flutter Doctor
-        run: flutter doctor -v
-
-      - name: Check Android SDK
+      - name: Build with fresh Flutter project
         run: |
-          echo "ANDROID_HOME: $ANDROID_HOME"
-          echo "ANDROID_SDK_ROOT: $ANDROID_SDK_ROOT"
-          ls -la $ANDROID_HOME/platforms/ 2>/dev/null || echo "No platforms"
-          ls -la $ANDROID_HOME/build-tools/ 2>/dev/null || echo "No build-tools"
-          flutter config --list
-          # Create local.properties if not exists
-          if [ ! -f android/local.properties ]; then
-            echo "Creating local.properties..."
-            echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
-            echo "sdk.dir=$ANDROID_HOME" >> android/local.properties
-          fi
-          cat android/local.properties 2>/dev/null || echo "No local.properties"
-
-      - name: Clean previous builds
-        run: flutter clean
-
-      - name: Get dependencies
-        run: flutter pub get
-
-      - name: Test Flutter environment with new project
-        run: |
+          set -o pipefail
+          
+          echo "=== Step 1: Create fresh Flutter project ==="
           cd /tmp
-          echo "=== Creating test Flutter project ==="
-          flutter create --org com.test test_app
-          cd test_app
-          echo "=== Test project Android config ==="
-          cat android/settings.gradle
-          cat android/app/build.gradle
-          cat android/build.gradle
-          cat android/gradle.properties
-          echo "=== Building test project ==="
-          set -o pipefail
-          flutter build apk --debug -v 2>&1 | tee /tmp/test_build.log
-          EXIT_CODE=${PIPESTATUS[0]}
-          if [ $EXIT_CODE -ne 0 ]; then
-            echo "=== Test project FAILED ==="
-            echo "=== tail of test build log ==="
-            tail -100 /tmp/test_build.log
-            echo "=== PROBLEM: Flutter environment is broken ==="
-          else
-            echo "=== Test project SUCCEEDED ==="
-            echo "=== PROBLEM: Issue is specific to novel-writer project ==="
-            find . -name "*.apk" 2>/dev/null
+          flutter create --org com.novelwriter --project-name novel_writer fresh_app
+          cd fresh_app
+          
+          echo "=== Step 2: Copy our code into fresh project ==="
+          # Remove default lib
+          rm -rf lib
+          # Copy our lib and pubspec
+          cp -r $GITHUB_WORKSPACE/lib .
+          cp $GITHUB_WORKSPACE/pubspec.yaml .
+          # Copy assets if any
+          if [ -d "$GITHUB_WORKSPACE/assets" ]; then
+            cp -r $GITHUB_WORKSPACE/assets .
           fi
-          cd $GITHUB_WORKSPACE
-        continue-on-error: true
-
-      - name: Gradle info
-        run: |
-          cd android
-          echo "=== Gradle version ==="
-          ./gradlew --version 2>&1
-          echo "=== Available tasks ==="
-          ./gradlew tasks --all 2>&1 | head -100
-          echo "=== Dependencies ==="
-          ./gradlew dependencies --configuration releaseRuntimeClasspath 2>&1 | head -100
-          cd ..
-
-      - name: Build APK (debug) - test JIT
-        id: build_debug
-        run: |
-          set -o pipefail
-          flutter build apk --debug -v 2>&1 | tee build_debug.log
+          
+          echo "=== Step 3: Get dependencies ==="
+          flutter pub get 2>&1
+          
+          echo "=== Step 4: Build APK ==="
+          flutter build apk --release 2>&1 | tee build.log
           EXIT_CODE=${PIPESTATUS[0]}
-          echo "DEBUG_EXIT_CODE=$EXIT_CODE" >> $GITHUB_OUTPUT
+          
           if [ $EXIT_CODE -ne 0 ]; then
-            echo "=== ERROR: Flutter debug build failed ==="
-            echo "=== tail of debug build log ==="
-            tail -200 build_debug.log
+            echo "=== BUILD FAILED - tail of log ==="
+            tail -200 build.log
             echo "=== Gradle daemon log ==="
-            cat ~/.gradle/daemon/*/daemon-*.log 2>/dev/null | tail -50 || echo "No daemon log"
-          else
-            echo "Debug build succeeded!"
-            find . -name "*.apk" 2>/dev/null
-          fi
-
-      - name: Build APK (release)
-        id: build
-        run: |
-          set -o pipefail
-          flutter build apk --release --verbose 2>&1 | tee build_release.log
-          EXIT_CODE=${PIPESTATUS[0]}
-          echo "BUILD_EXIT_CODE=$EXIT_CODE" >> $GITHUB_OUTPUT
-          if [ $EXIT_CODE -ne 0 ]; then
-            echo "Flutter release build failed with exit code $EXIT_CODE"
-            echo "=== tail of release build log ==="
-            tail -200 build_release.log
+            cat ~/.gradle/daemon/*/daemon-*.log 2>/dev/null | tail -50 || true
             exit $EXIT_CODE
           fi
-
-      - name: Find and Upload APK
-        if: always()
-        run: |
-          echo "=== All APK files ==="
-          find . -name "*.apk" 2>/dev/null || echo "None"
-          echo "=== build/ tree ==="
-          find build/ -type f 2>/dev/null | head -50 || echo "No build dir"
-          echo "=== android/app/build/ ==="
-          find android/app/build/ -name "*.apk" 2>/dev/null || echo "No APK in android/app/build"
-          echo "=== android/build/ ==="
-          find android/build/ -name "*.apk" 2>/dev/null || echo "No APK in android/build"
-          echo "=== build_release.log tail ==="
-          tail -50 build_release.log 2>/dev/null || echo "No build_release.log"
-          echo "=== build_debug.log tail ==="
-          tail -50 build_debug.log 2>/dev/null || echo "No build_debug.log"
           
+          echo "=== BUILD SUCCEEDED ==="
+          find . -name "*.apk" 2>/dev/null
+          
+          # Copy APK back to workspace
           APK=$(find . -name "*.apk" 2>/dev/null | head -1)
-          if [ -z "$APK" ]; then
-            echo "No APK found!"
-            exit 1
+          if [ -n "$APK" ]; then
+            mkdir -p $GITHUB_WORKSPACE/build/app/outputs/flutter-apk/
+            cp "$APK" $GITHUB_WORKSPACE/build/app/outputs/flutter-apk/app-release.apk
+            echo "APK copied to workspace"
           fi
-          echo "APK: $APK"
-          mkdir -p build/app/outputs/flutter-apk/
-          cp "$APK" build/app/outputs/flutter-apk/app-release.apk
 
       - name: Upload APK artifact
         if: success()
