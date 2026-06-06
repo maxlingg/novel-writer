@@ -13,6 +13,9 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
 
     steps:
       - name: Checkout code
@@ -74,14 +77,12 @@ jobs:
 
       - name: Create Release
         if: success()
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v1.0.${{ github.run_number }}
-          name: Release v1.0.${{ github.run_number }}
-          body: |
-            Novel Writer v1.0.${{ github.run_number }}
+        run: |
+          gh release create "v1.0.${{ github.run_number }}" \
+            --title "Release v1.0.${{ github.run_number }}" \
+            --notes "Novel Writer v1.0.${{ github.run_number }}
 
-            自动构建于 ${{ github.event.head_commit.timestamp }}
-          files: build/app/outputs/flutter-apk/app-release.apk
+自动构建于 ${{ github.event.head_commit.timestamp }}" \
+            build/app/outputs/flutter-apk/app-release.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
