@@ -22,14 +22,8 @@ dependencies:
   # 本地存储
   shared_preferences: ^2.2.2
 
-  # 文件选择
-  file_picker: ^6.1.1
-
   # 国际化
   intl: ^0.19.0
-
-  # 字体
-  google_fonts: ^6.1.0
 
   # 唯一ID
   uuid: ^4.3.3
