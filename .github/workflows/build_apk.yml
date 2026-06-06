@@ -45,24 +45,18 @@ jobs:
         continue-on-error: true
 
       - name: Build APK
-        run: |
-          flutter build apk --release --verbose 2>&1 | tee build.log
-        continue-on-error: true
-
-      - name: Show build log (last 100 lines)
-        if: always()
-        run: |
-          echo "=== Build log (last 100 lines) ==="
-          tail -100 build.log || echo "No build log found"
+        run: flutter build apk --release
 
       - name: Check APK file
         run: |
-          ls -la build/app/outputs/flutter-apk/
+          echo "=== Listing build output ==="
+          find build/ -name "*.apk" 2>/dev/null || echo "No APK files found"
+          ls -la build/app/outputs/flutter-apk/ 2>/dev/null || echo "Default path not found"
           if [ -f "build/app/outputs/flutter-apk/app-release.apk" ]; then
             echo "APK found successfully!"
             echo "Size: $(du -h build/app/outputs/flutter-apk/app-release.apk)"
           else
-            echo "APK not found!"
+            echo "APK not found at default path!"
             exit 1
           fi
 
