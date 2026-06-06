@@ -24,7 +24,7 @@ if (flutterVersionName == null) {
 
 android {
     namespace "com.novelwriter.app"
-    compileSdk flutter.compileSdkVersion
+    compileSdk 34
     ndkVersion flutter.ndkVersion
 
     compileOptions {
@@ -39,10 +39,9 @@ android {
     defaultConfig {
         applicationId "com.novelwriter.app"
         minSdkVersion flutter.minSdkVersion
-        targetSdk flutter.targetSdkVersion
+        targetSdk 34
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
-        multiDexEnabled true
     }
 
     buildTypes {
@@ -56,6 +55,4 @@ flutter {
     source "../.."
 }
 
-dependencies {
-    implementation 'androidx.multidex:multidex:2.0.1'
-}
+dependencies {}
