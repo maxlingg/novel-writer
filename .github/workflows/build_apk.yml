@@ -31,50 +31,56 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Build with fresh Flutter project
+      - name: Test dependencies (our pubspec + default lib)
+        run: |
+          set -o pipefail
+          cd /tmp
+          flutter create --org com.novelwriter test_deps
+          cd test_deps
+          cp $GITHUB_WORKSPACE/pubspec.yaml .
+          flutter pub get 2>&1
+          echo "=== Building with our deps + default lib ==="
+          flutter build apk --release 2>&1 | tee /tmp/test_deps.log
+          EXIT_CODE=${PIPESTATUS[0]}
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "=== DEPS TEST FAILED (problem is in dependencies) ==="
+            tail -100 /tmp/test_deps.log
+          else
+            echo "=== DEPS TEST PASSED (problem is in Dart code) ==="
+          fi
+          echo "DEPS_EXIT=$EXIT_CODE" >> $GITHUB_OUTPUT
+        continue-on-error: true
+
+      - name: Build APK
         run: |
           set -o pipefail
           
-          echo "=== Step 1: Create fresh Flutter project ==="
           cd /tmp
           flutter create --org com.novelwriter --project-name novel_writer fresh_app
           cd fresh_app
           
-          echo "=== Step 2: Copy our code into fresh project ==="
-          # Remove default lib
           rm -rf lib
-          # Copy our lib and pubspec
           cp -r $GITHUB_WORKSPACE/lib .
           cp $GITHUB_WORKSPACE/pubspec.yaml .
-          # Copy assets if any
-          if [ -d "$GITHUB_WORKSPACE/assets" ]; then
-            cp -r $GITHUB_WORKSPACE/assets .
-          fi
           
-          echo "=== Step 3: Get dependencies ==="
           flutter pub get 2>&1
           
-          echo "=== Step 4: Build APK ==="
           flutter build apk --release 2>&1 | tee build.log
           EXIT_CODE=${PIPESTATUS[0]}
           
           if [ $EXIT_CODE -ne 0 ]; then
             echo "=== BUILD FAILED - tail of log ==="
             tail -200 build.log
-            echo "=== Gradle daemon log ==="
-            cat ~/.gradle/daemon/*/daemon-*.log 2>/dev/null | tail -50 || true
             exit $EXIT_CODE
           fi
           
           echo "=== BUILD SUCCEEDED ==="
           find . -name "*.apk" 2>/dev/null
           
-          # Copy APK back to workspace
           APK=$(find . -name "*.apk" 2>/dev/null | head -1)
           if [ -n "$APK" ]; then
             mkdir -p $GITHUB_WORKSPACE/build/app/outputs/flutter-apk/
             cp "$APK" $GITHUB_WORKSPACE/build/app/outputs/flutter-apk/app-release.apk
-            echo "APK copied to workspace"
           fi
 
       - name: Upload APK artifact
