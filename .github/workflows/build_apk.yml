@@ -45,7 +45,13 @@ jobs:
         continue-on-error: true
 
       - name: Build APK
-        run: flutter build apk --release
+        run: |
+          set -o pipefail
+          flutter build apk --release --no-shrink 2>&1 | tee build.log
+
+      - name: Show build log tail
+        if: always()
+        run: tail -100 build.log || echo "No build log"
 
       - name: Check APK file
         run: |
