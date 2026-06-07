@@ -32,6 +32,13 @@ class _EditorScreenState extends State<EditorScreen> {
   int _wordCount = 0;
   DateTime? _lastSavedTime;
 
+  // 撤销/重做历史栈
+  final List<_EditState> _undoStack = [];
+  final List<_EditState> _redoStack = [];
+  static const int _maxHistorySize = 100;
+  bool _isUndoRedo = false;
+  Timer? _historyDebounceTimer;
+
   @override
   void initState() {
     super.initState();
@@ -41,6 +48,7 @@ class _EditorScreenState extends State<EditorScreen> {
   @override
   void dispose() {
     _autoSaveTimer?.cancel();
+    _historyDebounceTimer?.cancel();
     _contentController.dispose();
     _titleController.dispose();
     super.dispose();
@@ -88,6 +96,35 @@ class _EditorScreenState extends State<EditorScreen> {
       }
       _wordCount = newWordCount;
     });
+
+    // 手动输入时，防抖记录历史
+    if (!_isUndoRedo) {
+      _historyDebounceTimer?.cancel();
+      _historyDebounceTimer = Timer(const Duration(milliseconds: 500), () {
+        _pushHistory();
+      });
+    }
+  }
+
+  void _pushHistory() {
+    final currentText = _contentController.text;
+    final currentSelection = _contentController.selection;
+
+    // 如果文本没变化，不记录
+    if (_undoStack.isNotEmpty && _undoStack.last.text == currentText) return;
+
+    _undoStack.add(_EditState(
+      text: currentText,
+      selection: currentSelection,
+    ));
+
+    // 限制历史栈大小
+    while (_undoStack.length > _maxHistorySize) {
+      _undoStack.removeAt(0);
+    }
+
+    // 清空重做栈
+    _redoStack.clear();
   }
 
   void _startAutoSave() {
@@ -134,6 +171,7 @@ class _EditorScreenState extends State<EditorScreen> {
   }
 
   void _insertFormatting(String prefix, String suffix) {
+    _pushHistory();
     final selection = _contentController.selection;
     final text = _contentController.text;
 
@@ -165,6 +203,7 @@ class _EditorScreenState extends State<EditorScreen> {
   }
 
   void _insertLinePrefix(String prefix) {
+    _pushHistory();
     final selection = _contentController.selection;
     final text = _contentController.text;
 
@@ -233,19 +272,55 @@ class _EditorScreenState extends State<EditorScreen> {
   }
 
   void _undo() {
-    if (_contentController.text.isNotEmpty) {
+    if (_undoStack.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('撤销功能开发中...')),
+        const SnackBar(content: Text('没有可撤销的操作'), duration: Duration(seconds: 1)),
       );
+      return;
     }
+
+    _isUndoRedo = true;
+
+    // 保存当前状态到重做栈
+    _redoStack.add(_EditState(
+      text: _contentController.text,
+      selection: _contentController.selection,
+    ));
+
+    // 取出上一个状态
+    final previousState = _undoStack.removeLast();
+    _contentController.text = previousState.text;
+    _contentController.selection = previousState.selection;
+    _contentController.notifyListeners();
+
+    _isUndoRedo = false;
+    setState(() {});
   }
 
   void _redo() {
-    if (_contentController.text.isNotEmpty) {
+    if (_redoStack.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('重做功能开发中...')),
+        const SnackBar(content: Text('没有可重做的操作'), duration: Duration(seconds: 1)),
       );
+      return;
     }
+
+    _isUndoRedo = true;
+
+    // 保存当前状态到撤销栈
+    _undoStack.add(_EditState(
+      text: _contentController.text,
+      selection: _contentController.selection,
+    ));
+
+    // 取出下一个状态
+    final nextState = _redoStack.removeLast();
+    _contentController.text = nextState.text;
+    _contentController.selection = nextState.selection;
+    _contentController.notifyListeners();
+
+    _isUndoRedo = false;
+    setState(() {});
   }
 
   @override
@@ -554,4 +629,15 @@ class _EditorScreenState extends State<EditorScreen> {
       ),
     );
   }
+}
+
+/// 编辑器状态快照，用于撤销/重做
+class _EditState {
+  final String text;
+  final TextSelection selection;
+
+  _EditState({
+    required this.text,
+    required this.selection,
+  });
 }

@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../utils/constants.dart';
+import '../utils/file_helper.dart';
 import '../models/distillation.dart';
 import '../services/distillation_service.dart';
 import '../services/project_service.dart';
@@ -691,10 +693,41 @@ class _DistillationScreenState extends State<DistillationScreen> {
     DistillationService distillationService,
   ) async {
     final content = await distillationService.exportDistillation(distillation.id);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('导出功能开发中...')),
-      );
+    if (content.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('没有可导出的内容')),
+        );
+      }
+      return;
+    }
+
+    // 将内容保存到文件
+    try {
+      final appDir = await FileHelper.appDirectory;
+      final exportDir = Directory('${appDir.path}/exports');
+      if (!await exportDir.exists()) {
+        await exportDir.create(recursive: true);
+      }
+
+      final fileName = '${distillation.name}_${DateTime.now().millisecondsSinceEpoch}.txt';
+      final filePath = '${exportDir.path}/$fileName';
+      await FileHelper.writeTextFile(filePath, content);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('已导出到: $fileName'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('导出失败: $e')),
+        );
+      }
     }
   }
 

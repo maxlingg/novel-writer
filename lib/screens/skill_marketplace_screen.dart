@@ -43,7 +43,12 @@ class _SkillMarketplaceScreenState extends State<SkillMarketplaceScreen> {
       ),
       body: Consumer<SkillManager>(
         builder: (context, skillManager, child) {
-          final skills = skillManager.searchSkills(_searchQuery);
+          var skills = skillManager.searchSkills(_searchQuery);
+
+          // 应用分类筛选
+          if (_selectedCategory != '全部') {
+            skills = skills.where((s) => s.category == _selectedCategory).toList();
+          }
 
           return Column(
             children: [

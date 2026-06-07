@@ -225,6 +225,17 @@ class _ProjectScreenState extends State<ProjectScreen> {
     }
     final theme = Theme.of(context);
 
+    // 按卷分组章节
+    final chaptersByVolume = <String, List<Chapter>>{};
+    final ungroupedChapters = <Chapter>[];
+    for (final chapter in _chapters) {
+      if (chapter.volumeId.isEmpty) {
+        ungroupedChapters.add(chapter);
+      } else {
+        chaptersByVolume.putIfAbsent(chapter.volumeId, () => []).add(chapter);
+      }
+    }
+
     return Column(
       children: [
         // 项目信息卡片
@@ -292,18 +303,111 @@ class _ProjectScreenState extends State<ProjectScreen> {
                 )
               : ListView.builder(
                   padding: const EdgeInsets.symmetric(vertical: 8),
-                  itemCount: _chapters.length,
+                  itemCount: _getListItemCount(chaptersByVolume, ungroupedChapters),
                   itemBuilder: (context, index) {
-                    return ChapterTile(
-                      chapter: _chapters[index],
-                      onTap: () => _openChapter(_chapters[index]),
-                      onLongPress: () => _deleteChapter(_chapters[index]),
+                    return _buildChapterListItem(
+                      context,
+                      index,
+                      chaptersByVolume,
+                      ungroupedChapters,
                     );
                   },
                 ),
         ),
       ],
     );
+  }
+
+  int _getListItemCount(
+    Map<String, List<Chapter>> chaptersByVolume,
+    List<Chapter> ungroupedChapters,
+  ) {
+    int count = ungroupedChapters.length;
+    for (final entry in chaptersByVolume.entries) {
+      count += 1 + entry.value.length; // 卷标题 + 章节
+    }
+    return count;
+  }
+
+  Widget _buildChapterListItem(
+    BuildContext context,
+    int index,
+    Map<String, List<Chapter>> chaptersByVolume,
+    List<Chapter> ungroupedChapters,
+  ) {
+    final theme = Theme.of(context);
+    int currentIndex = 0;
+
+    // 先显示未分组的章节
+    if (currentIndex + ungroupedChapters.length > index) {
+      final chapter = ungroupedChapters[index - currentIndex];
+      return ChapterTile(
+        chapter: chapter,
+        onTap: () => _openChapter(chapter),
+        onLongPress: () => _deleteChapter(chapter),
+      );
+    }
+    currentIndex += ungroupedChapters.length;
+
+    // 再显示按卷分组的章节
+    for (final entry in chaptersByVolume.entries) {
+      final volumeId = entry.key;
+      final volumeChapters = entry.value;
+
+      // 卷标题
+      if (currentIndex == index) {
+        final volume = _volumes.firstWhere(
+          (v) => v.id == volumeId,
+          orElse: () => Volume(projectId: widget.projectId ?? '', title: '未知卷'),
+        );
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          color: theme.colorScheme.surfaceContainerLow,
+          child: Row(
+            children: [
+              Icon(Icons.folder_outlined, size: 18, color: theme.colorScheme.primary),
+              const SizedBox(width: 8),
+              Text(
+                volume.title,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '(${volumeChapters.length}章)',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.outline,
+                ),
+              ),
+              const Spacer(),
+              IconButton(
+                icon: const Icon(Icons.add, size: 18),
+                onPressed: () => _addChapter(volumeId: volumeId),
+                tooltip: '在此卷中添加章节',
+                visualDensity: VisualDensity.compact,
+              ),
+            ],
+          ),
+        );
+      }
+      currentIndex++;
+
+      // 卷中的章节
+      final relativeIndex = index - currentIndex;
+      if (relativeIndex < volumeChapters.length) {
+        final chapter = volumeChapters[relativeIndex];
+        return ChapterTile(
+          chapter: chapter,
+          onTap: () => _openChapter(chapter),
+          onLongPress: () => _deleteChapter(chapter),
+        );
+      }
+      currentIndex += volumeChapters.length;
+    }
+
+    return const SizedBox.shrink();
   }
 
   Widget _buildProjectInfo() {

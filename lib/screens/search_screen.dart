@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/search_service.dart';
@@ -21,6 +22,7 @@ class SearchScreen extends StatefulWidget {
 class _SearchScreenState extends State<SearchScreen> {
   final _searchController = TextEditingController();
   final _focusNode = FocusNode();
+  Timer? _debounceTimer;
 
   @override
   void initState() {
@@ -32,6 +34,7 @@ class _SearchScreenState extends State<SearchScreen> {
   void dispose() {
     _searchController.dispose();
     _focusNode.dispose();
+    _debounceTimer?.cancel();
     super.dispose();
   }
 
@@ -58,6 +61,13 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
+  void _onSearchChanged(String value) {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+      _performSearch(value);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -71,10 +81,7 @@ class _SearchScreenState extends State<SearchScreen> {
           ),
           textInputAction: TextInputAction.search,
           onSubmitted: _performSearch,
-          onChanged: (value) {
-            // 实时搜索（带防抖）
-            _performSearch(value);
-          },
+          onChanged: _onSearchChanged,
         ),
         actions: [
           IconButton(

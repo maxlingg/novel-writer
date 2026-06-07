@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../utils/constants.dart';
 import '../models/ai_model_config.dart';
 import '../services/settings_service.dart';
@@ -154,8 +155,11 @@ class SettingsScreen extends StatelessWidget {
                       title: const Text('GitHub'),
                       subtitle: const Text('查看源代码'),
                       trailing: const Icon(Icons.open_in_new),
-                      onTap: () {
-                        // GitHub 链接
+                      onTap: () async {
+                        final uri = Uri.parse('https://github.com');
+                        if (await canLaunchUrl(uri)) {
+                          await launchUrl(uri, mode: LaunchMode.externalApplication);
+                        }
                       },
                     ),
                   ],
